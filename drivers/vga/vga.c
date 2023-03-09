@@ -27,10 +27,10 @@
 
 /* Registers */
 #define CURSOR_START_REGISTER   0xA		// bit  5:   Cursor Disable
-										// bits 0-4: Cursor Scan Line Start
+										// bits 4-0: Cursor Scan Line Start
 
-#define CURSOR_END_REGISTER     0xB     // bits 5-6: Cursor Skew
-										// bits 0-4: Cursor Scan Line End
+#define CURSOR_END_REGISTER     0xB     // bits 6-5: Cursor Skew
+										// bits 4-0: Cursor Scan Line End
 
 /* Cursor scanline values */
 #define MIN_SCANLINE            0
@@ -97,8 +97,8 @@ static void fb_write_cell(unsigned int i, char c, uint8_t bg, uint8_t fg) {
 	char* fb = (char*) FB_MMIO_LOCATION;    // fb[i*2]:       Code Point
 											// fb[i*2 + 1]:
 											//		bit  7:	  Blink Bit
-											//      bits 4-6: Background Color
-											//      bits 0-3: Foreground Color
+											//      bits 6-4: Background Color
+											//      bits 3-0: Foreground Color
  
 	/*  Since each character takes up two bytes of space in memory and the index is given in
 	 *  single steps, i must be multiplied by 2 to get the correct position to write the character
