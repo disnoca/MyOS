@@ -7,7 +7,7 @@
  *  @param data data to send to the I/O port
  */
 static inline void outb(uint16_t port, uint8_t data) {
-    asm volatile("out %%al, %%dx" : : "a" (data), "d" (port));
+	asm volatile("out %%al, %%dx" : : "a" (data), "d" (port));
 }
 
 /** inb:
@@ -17,7 +17,7 @@ static inline void outb(uint16_t port, uint8_t data) {
  *  @return      read byte
  */
 static inline uint8_t inb(uint16_t port) {
-    uint8_t data;
-    asm volatile("in %%dx, %%al" : "=a" (data) : "d" (port));
-    return data;
+	uint8_t data;
+	asm volatile("in %%dx, %%al" : "=a" (data) : "d" (port));
+	return data;
 }

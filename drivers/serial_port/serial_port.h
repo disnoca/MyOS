@@ -1,3 +1,7 @@
+#define ERROR_LOG 0
+#define WARNING_LOG 1
+#define INFO_LOG 2
+
 /** serial_init:
  *  Initializes the serial ports.
  * 
@@ -6,9 +10,12 @@
 */
 int serial_init();
 
-/** serial_write:
- *  Writes a character to the serial port.
+/** log:
+ *  Writes a log message. Assumes the message ends with a null character. 
+ *  The null character is transformed into a new line when logging the message,
+ *  by modifying the string itself.
  * 
- *  @param c the character to be written
+ *  @param msg  the message to be written
+ *  @param type the type of log message
 */
-void serial_write(char* buf, unsigned int len);
+void log(char* msg, unsigned int type);

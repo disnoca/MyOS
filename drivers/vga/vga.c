@@ -27,10 +27,10 @@
 
 /* Registers */
 #define CURSOR_START_REGISTER   0xA		// bit  5:   Cursor Disable
-                                        // bits 0-4: Cursor Scan Line Start
+										// bits 0-4: Cursor Scan Line Start
 
 #define CURSOR_END_REGISTER     0xB     // bits 5-6: Cursor Skew
-                                        // bits 0-4: Cursor Scan Line End
+										// bits 0-4: Cursor Scan Line End
 
 /* Cursor scanline values */
 #define MIN_SCANLINE            0
@@ -42,41 +42,46 @@
 
 
 void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
-    cursor_start &= 0x1F;   // to make sure that other fields remain untouched
+	cursor_start &= 0x1F;   // to make sure that other fields remain untouched
 
-    outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
-    outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xC0) | cursor_start);
+	outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
+	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xC0) | cursor_start);
 
-    outb(FB_COMMAND_PORT, CURSOR_END_REGISTER);
-    outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xE0) | cursor_end);
+	outb(FB_COMMAND_PORT, CURSOR_END_REGISTER);
+	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xE0) | cursor_end);
 }
 
 void disable_cursor(void) {
-    outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
-    outb(FB_DATA_PORT, 0x20);
+	outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
+	outb(FB_DATA_PORT, 0x20);
 }
 
+/** get_cursor_position:
+ *  Returns the cursor's position.
+ * 
+ *  @return the cursor's position
+*/
 static uint16_t get_cursor_position(void) {
-    uint16_t pos = 0;
-    
-    outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-    pos |= inb(FB_DATA_PORT);
-    outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-    pos |= ((uint16_t) inb(FB_DATA_PORT)) << 8;
+	uint16_t pos = 0;
+	
+	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
+	pos |= inb(FB_DATA_PORT);
+	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
+	pos |= ((uint16_t) inb(FB_DATA_PORT)) << 8;
 
-    return pos;
+	return pos;
 }
 
 void move_cursor(uint16_t pos) {
-    outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-    outb(FB_DATA_PORT, (pos >> 8) & 0xFF);
-    outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-    outb(FB_DATA_PORT, pos & 0xFF);
+	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
+	outb(FB_DATA_PORT, (pos >> 8) & 0xFF);
+	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
+	outb(FB_DATA_PORT, pos & 0xFF);
 }
 
 void init_cursor(void) {
-    enable_cursor(MIN_SCANLINE, MAX_SCANLINE);
-    move_cursor(0);
+	enable_cursor(MIN_SCANLINE, MAX_SCANLINE);
+	move_cursor(0);
 }
 
 /** fb_write_cell:
@@ -89,24 +94,24 @@ void init_cursor(void) {
  *  @param fg foreground color
 */
 static void fb_write_cell(unsigned int i, char c, uint8_t bg, uint8_t fg) {
-    char* fb = (char*) FB_MMIO_LOCATION;    // fb[i*2]:       Code Point
-                                            // fb[i*2 + 1]:
-                                            //		bit  7:	  Blink Bit
-                                            //      bits 4-6: Background Color
-                                            //      bits 0-3: Foreground Color
-
-    /*  Since each character takes up two bytes of space in memory and the index is given in
-     *  single steps, i must be multiplied by 2 to get the correct position to write the character
-    */   
-    fb[i*2] = c;
-    fb[i*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
+	char* fb = (char*) FB_MMIO_LOCATION;    // fb[i*2]:       Code Point
+											// fb[i*2 + 1]:
+											//		bit  7:	  Blink Bit
+											//      bits 4-6: Background Color
+											//      bits 0-3: Foreground Color
+ 
+	/*  Since each character takes up two bytes of space in memory and the index is given in
+	 *  single steps, i must be multiplied by 2 to get the correct position to write the character
+	*/
+	fb[i*2] = c;
+	fb[i*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
 }
 
 void fb_write(char* buf, unsigned int len) {
-    uint16_t cursor_pos = get_cursor_position();
+	uint16_t cursor_pos = get_cursor_position();
 
-    for(unsigned i = 0; i < len; i++)
-        fb_write_cell(cursor_pos + i, buf[i], BLACK, WHITE);
+	for(unsigned i = 0; i < len; i++)
+		fb_write_cell(cursor_pos + i, buf[i], BLACK, WHITE);
 
-    move_cursor(cursor_pos + len);
+	move_cursor(cursor_pos + len);
 }
