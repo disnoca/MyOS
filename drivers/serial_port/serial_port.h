@@ -1,3 +1,6 @@
+#ifndef SERIAL_PORT
+#define SERIAL_PORT
+
 #define ERROR_LOG 0
 #define WARNING_LOG 1
 #define INFO_LOG 2
@@ -19,3 +22,5 @@ int serial_init();
  *  @param type the type of log message
 */
 void log(char* msg, unsigned int type);
+
+#endif

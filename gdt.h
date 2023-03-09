@@ -1,3 +1,6 @@
+#ifndef GDT
+#define GDT
+
 #include "types.h"
 
 struct gdtr {
@@ -24,3 +27,5 @@ void init_gdt(void);
 /*static inline void load_gdt(struct gdt gdt) {
 
 }*/
+
+#endif

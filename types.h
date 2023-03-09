@@ -1,3 +1,6 @@
+#ifndef TYPES
+#define TYPES
+
 typedef char int8_t;
 typedef short int16_t;
 typedef int int32_t;
@@ -8,3 +11,5 @@ typedef unsigned int uint32_t;
 typedef unsigned long uint64_t;
 
 typedef unsigned int size_t;
+
+#endif

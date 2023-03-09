@@ -1,3 +1,6 @@
+#ifndef IO
+#define IO
+
 #include "types.h"
 
 /** outb:
@@ -21,3 +24,5 @@ static inline uint8_t inb(uint16_t port) {
 	asm volatile("in al, dx" : "=a" (data) : "d" (port));
 	return data;
 }
+
+#endif

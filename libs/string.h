@@ -1,3 +1,6 @@
+#ifndef STRING
+#define STRING
+
 #include "../types.h"
 
 /** strlen:
@@ -7,3 +10,5 @@
  * 	@return    the length of the string
 */
 size_t strlen(char* str);
+
+#endif

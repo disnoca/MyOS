@@ -1,3 +1,6 @@
+#ifndef VGA
+#define VGA
+
 #include "../../types.h"
 
 /** enable_cursor:
@@ -33,3 +36,5 @@ void init_cursor(void);
  *  @param len number of characters to be written
 */
 void fb_write(char* buf, size_t len);
+
+#endif
