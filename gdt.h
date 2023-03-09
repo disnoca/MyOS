@@ -24,8 +24,8 @@ extern struct gdt gdt;
 */
 void init_gdt(void);
 
-/*static inline void load_gdt(struct gdt gdt) {
-
-}*/
+static inline void load_gdt(struct gdt* gdt) {
+	asm volatile("lgdt [%0]" : : "r" (gdt));
+}
 
 #endif

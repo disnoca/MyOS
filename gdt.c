@@ -10,6 +10,7 @@
 */
 
 #include "gdt.h"
+#include "tss.h"
 
 #define FLAT_MODE_BASE 							0x0
 #define FLAT_MODE_LIMIT 						0x0
@@ -66,5 +67,5 @@ void init_gdt(void) {
 	encode_gdt_entry(gdt.kernel_mode_data_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_gdt_entry(gdt.user_mode_code_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, USER_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_gdt_entry(gdt.user_mode_data_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, USER_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
-	encode_gdt_entry(gdt.task_state_segment, );
+	encode_gdt_entry(gdt.task_state_segment, (uint32_t) &tss, sizeof(struct tss), TASK_STATE_SEGMENT_ACCESS_BYTE, 0x0);
 }
