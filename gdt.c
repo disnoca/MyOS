@@ -14,7 +14,7 @@
 #include "types.h"
 
 #define FLAT_MODE_BASE 							0x0
-#define FLAT_MODE_LIMIT 						0x0
+#define FLAT_MODE_LIMIT 						0xFFFFF
 
 #define KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE 	0x9A
 #define KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE 	0x92
