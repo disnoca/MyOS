@@ -1,9 +1,10 @@
 #ifndef SERIAL_PORT
 #define SERIAL_PORT
 
-#define ERROR_LOG 0
-#define WARNING_LOG 1
-#define INFO_LOG 2
+#define INFO_LOG 0
+#define DEBUG_LOG 1
+#define WARNING_LOG 2
+#define ERROR_LOG 3
 
 /** serial_init:
  *  Initializes the serial ports.

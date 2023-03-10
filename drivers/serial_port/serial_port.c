@@ -148,14 +148,17 @@ static void serial_write(char* buf, unsigned int len) {
 void log(char* msg, unsigned int type) {
 	switch(type)
 	{
-	case ERROR_LOG:
-		serial_write("[ERROR] ", 8);
+	case INFO_LOG:
+		serial_write("[INFO] ", 7);
+		break;
+	case DEBUG_LOG:
+		serial_write("[DEBUG] ", 8);
 		break;
 	case WARNING_LOG:
 		serial_write("[WARNING] ", 10);
 		break;
-	case INFO_LOG:
-		serial_write("[INFO] ", 7);
+	case ERROR_LOG:
+		serial_write("[ERROR] ", 8);
 		break;
 	default:
 		break;
