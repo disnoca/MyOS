@@ -11,6 +11,7 @@
 
 #include "gdt.h"
 #include "tss.h"
+#include "types.h"
 
 #define FLAT_MODE_BASE 							0x0
 #define FLAT_MODE_LIMIT 						0x0
@@ -23,6 +24,23 @@
 
 #define LEGACY_MODE_SEGMENT_FLAGS     			0xC
 
+struct gdt {
+	uint8_t null_descriptor[8];
+	uint8_t kernel_mode_code_segment[8];
+	uint8_t kernel_mode_data_segment[8];
+	uint8_t user_mode_code_segment[8];
+	uint8_t user_mode_data_segment[8];
+	uint8_t task_state_segment[8];
+} __attribute__((packed));
+
+struct gdt_descriptor {
+	uint32_t address;
+	uint16_t size;
+} __attribute__((packed));
+
+struct gdt gdt;
+struct gdt_descriptor gdtd;
+
 /* Legacy Segment Descriptor structure:
 *	bits 63-56: Base Address [31:24]
 *	bits 55-52: Flags (G, D/B, L, AVL)
@@ -31,8 +49,6 @@
 *	bits 39-16: Base Address [23:0]
 *	bits 15-0:  Segment Limit [15:0]
 */
-
-struct gdt gdt;
 
 /** encode_gdt_entry:
  * 	Encondes the GDT entry with the given values.
@@ -69,3 +85,10 @@ void init_gdt(void) {
 	encode_gdt_entry(gdt.user_mode_data_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, USER_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_gdt_entry(gdt.task_state_segment, (uint32_t) &tss, sizeof(struct tss), TASK_STATE_SEGMENT_ACCESS_BYTE, 0x0);
 }
+
+void load_gdt(void) {
+	gdtd.address = (uint32_t) &gdt;
+	gdtd.size = (uint16_t) sizeof(struct gdt);
+	asm volatile("lgdt [%0]" : : "r" (&gdtd));
+}
+

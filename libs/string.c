@@ -1,6 +1,6 @@
 #include "string.h"
 
-unsigned int strlen(char* str) {
+size_t strlen(char* str) {
 	unsigned len = 0;
 	char c;
 
