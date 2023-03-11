@@ -12,8 +12,8 @@
 #include "gdt.h"
 #include "types.h"
 
-#define FLAT_MODE_BASE 							0x0
-#define FLAT_MODE_LIMIT 						0xFFFFF
+#define FLAT_MODEL_BASE 							0x0
+#define FLAT_MODEL_LIMIT 						0xFFFFF
 
 #define KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE 	0x9A
 #define KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE 	0x92
@@ -87,7 +87,7 @@ struct tss {
 
 /* Global Descriptor Table 
  * Except for a null descriptor in the fist position, this format is not global for all GDTs.
- * It's especially made to have a Flat-Memory Mode, which essentially means there is no segmentation.
+ * It's especially made to have a Flat-Memory Model, which essentially means there is no segmentation.
 */
 struct gdt {
 	uint8_t null_descriptor[8];
@@ -139,10 +139,10 @@ static void encode_segment_descriptor(uint8_t entry[8], uint32_t base, uint32_t 
 
 void gdt_init(void) {
 	encode_segment_descriptor(gdt.null_descriptor, 0x0, 0x0, 0x0, 0x0);
-	encode_segment_descriptor(gdt.kernel_mode_code_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
-	encode_segment_descriptor(gdt.kernel_mode_data_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
-	encode_segment_descriptor(gdt.user_mode_code_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, USER_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
-	encode_segment_descriptor(gdt.user_mode_data_segment, FLAT_MODE_BASE, FLAT_MODE_LIMIT, USER_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
+	encode_segment_descriptor(gdt.kernel_mode_code_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
+	encode_segment_descriptor(gdt.kernel_mode_data_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
+	encode_segment_descriptor(gdt.user_mode_code_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, USER_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
+	encode_segment_descriptor(gdt.user_mode_data_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, USER_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_segment_descriptor(gdt.task_state_segment, (uint32_t) &tss, sizeof(struct tss), TASK_STATE_SEGMENT_ACCESS_BYTE, 0x0);
 }
 

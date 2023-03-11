@@ -2,7 +2,7 @@
 #define GDT
 
 /**	gdt_init:
- * 	Encodes the Global Descriptor Table for Flat-Memory Mode (no segmentation)
+ * 	Encodes the Global Descriptor Table for Flat-Memory Model (no segmentation)
 */
 void gdt_init(void);
 
