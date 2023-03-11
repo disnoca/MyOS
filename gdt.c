@@ -26,43 +26,62 @@
 struct tss {
     uint32_t   link;
     uint32_t   res1;
-    uint64_t   esp0;
+
+    uint32_t   esp0[2];
+
     uint32_t   ss0;
     uint32_t   res2;
-    uint64_t   esp1;
+
+    uint32_t   esp1[2];
+
     uint32_t   ss1;
     uint32_t   res3;
-    uint64_t   esp2;
+
+    uint32_t   esp2[2];
+
     uint32_t   ss2;
     uint32_t   res4;
-    uint64_t   cr3;
-    uint64_t   eip;
-    uint64_t   eflags;
-    uint64_t   eax;
-    uint64_t   ecx;
-    uint64_t   edx;
-    uint64_t   ebx;
-    uint64_t   esp;
-    uint64_t   ebp;
-    uint64_t   esi;
-    uint64_t   edi;
+
+    uint32_t   cr3[2];
+
+    uint32_t   eip[2];
+
+    uint32_t   eflags[2];
+
+    uint32_t   eax[2];
+    uint32_t   ecx[2];
+    uint32_t   edx[2];
+    uint32_t   ebx[2];
+    uint32_t   esp[2];
+    uint32_t   ebp[2];
+    uint32_t   esi[2];
+    uint32_t   edi[2];
+
     uint32_t   es;
     uint32_t   res5;
+    
     uint32_t   cs;
     uint32_t   res6;
+
     uint32_t   ss;
     uint32_t   res7;
+
     uint32_t   ds;
     uint32_t   res8;
+
     uint32_t   fs;
     uint32_t   res9;
+
     uint32_t   gs;
     uint32_t   res10;
+
     uint32_t   ldt;
     uint32_t   res11;
+
     uint32_t   trap;
     uint32_t   iomap;
-	uint64_t   ssp;
+    
+	uint32_t   ssp[2];
 } __attribute__((packed));
 
 struct gdt {
