@@ -41,7 +41,7 @@
 #define WHITE                   15
 
 
-void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+void cursor_enable(uint8_t cursor_start, uint8_t cursor_end) {
 	cursor_start &= 0x1F;   // to make sure that other fields remain untouched
 
 	outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
@@ -51,7 +51,7 @@ void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
 	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xE0) | cursor_end);
 }
 
-void disable_cursor(void) {
+void cursor_disable(void) {
 	outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
 	outb(FB_DATA_PORT, 0x20);
 }
@@ -72,16 +72,16 @@ static uint16_t get_cursor_position(void) {
 	return pos;
 }
 
-void move_cursor(uint16_t pos) {
+void cursor_move(uint16_t pos) {
 	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
 	outb(FB_DATA_PORT, (pos >> 8) & 0xFF);
 	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
 	outb(FB_DATA_PORT, pos & 0xFF);
 }
 
-void init_cursor(void) {
-	enable_cursor(MIN_SCANLINE, MAX_SCANLINE);
-	move_cursor(0);
+void cursor_init(void) {
+	cursor_enable(MIN_SCANLINE, MAX_SCANLINE);
+	cursor_move(0);
 }
 
 /** fb_write_cell:
@@ -113,5 +113,5 @@ void fb_write(char* buf, unsigned int len) {
 	for(unsigned i = 0; i < len; i++)
 		fb_write_cell(cursor_pos + i, buf[i], BLACK, WHITE);
 
-	move_cursor(cursor_pos + len);
+	cursor_move(cursor_pos + len);
 }

@@ -1,14 +1,14 @@
 #ifndef GDT
 #define GDT
 
-/**	init_gdt:
+/**	gdt_init:
  * 	Encodes the Global Descriptor Table for Flat-Memory Mode (no segmentation)
 */
-void init_gdt(void);
+void gdt_init(void);
 
-/**	load_gdt:
+/**	gdt_load:
  * 	Loads the Global Descriptor Table into the Global Descriptor Table Register
 */
-void load_gdt(void);
+void gdt_load(void);
 
 #endif

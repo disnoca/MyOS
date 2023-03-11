@@ -3,31 +3,31 @@
 
 #include "../../types.h"
 
-/** enable_cursor:
+/** cursor_enable:
  *  Enables the cursor and sets the start and end scanlines
  * 
  * @param cursor_start highest (minimum) scanline
  * @param cursor_end   lowest (maximum) scanline
 */
-void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+void cursor_enable(uint8_t cursor_start, uint8_t cursor_end);
 
-/** disable_cursor:
+/** cursor_disable:
  *  Disables the cursor
 */
-void disable_cursor(void);
+void cursor_disable(void);
 
-/** fb_move_cursor:
+/** cursor_move:
  *  Moves the cursor of the framebuffer to the given position
  *
  *  @param pos new position of the cursor
 */
-void move_cursor(uint16_t pos);
+void cursor_move(uint16_t pos);
 
-/** fb_init_cursor:
+/** cursor_init:
  *  Enables the cursor, setting its scanlines to their respective maximums 
  *  and sets its position to 0
 */
-void init_cursor(void);
+void cursor_init(void);
 
 /** fb_write:
  *  Writes the given characters to the framebuffer

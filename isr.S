@@ -1,37 +1,37 @@
-%macro no_error_isr %1
+%macro no_error_isr 1
 global interrupt_handler_%1
 interrupt_handler_%1:
-    push    dword 0                     ; push 0 as error code
-    push    dword %1                    ; push the interrupt vector id
-    jmp     common_isr                  ; jump to the common handler
+	push    dword 0                     ; push 0 as error code
+	push    dword %1                    ; push the interrupt vector id
+	jmp     common_isr                  ; jump to the common handler
 %endmacro
 
-%macro error_isr %1
+%macro error_isr 1
 global interrupt_handler_%1
 interrupt_handler_%1:
-    push    dword %1                    ; push the interrupt vector id
-    jmp     common_isr                  ; jump to the common handler
+	push    dword %1                    ; push the interrupt vector id
+	jmp     common_isr                  ; jump to the common handler
 %endmacro
 
 extern isr_handler
 
 common_isr:                             ; the common parts of the generic interrupt handler
-    ; save the registers
-    pushad
+	; save the registers
+	pushad
 
 	cld
 
-    ; call the C function
-    call    isr_handler
+	; call the C function
+	call    isr_handler
 
-    ; restore the registers
-    popad
+	; restore the registers
+	popad
 
-    ; restore the esp
-    add     esp, 8
+	; restore the esp
+	add     esp, 8
 
-    ; return to the code that got interrupted
-    iret
+	; return to the code that got interrupted
+	iret
 
 ; Interrupt Vectors
 no_error_isr 0
