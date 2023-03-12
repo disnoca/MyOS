@@ -1,3 +1,6 @@
+; Entry point for the Interrupt Service Routines
+; This code implements a common function (and macros) to handle all the ISRs
+
 %macro no_error_isr 1
 global interrupt_handler_%1
 interrupt_handler_%1:

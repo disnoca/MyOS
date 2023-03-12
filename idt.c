@@ -1,16 +1,16 @@
 /**
- * Code for setting up the Interrupt Descriptor Table along with the Interrupt Service Routines.
+ * Code for setting up the Interrupt Descriptor Table.
  * 
  * Refer to:
- * AMD64 Architecture Programmer's Manual Volume 2: System Programming Section 8
+ * AMD64 Architecture Programmer's Manual Volume 2: System Programming Section 4
  * https://wiki.osdev.org/Interrupt_Descriptor_Table
  * 
  * @author Samuel Pires
 */
 
 #include "idt.h"
-#include "isr.h"
 #include "types.h"
+#include "isr_entry.h"
 
 #define HARDWARE_INTERRUPT_ENTRIES   32
 #define MAX_INTERRUPT_ENTRIES        256
@@ -99,8 +99,4 @@ void idt_load(void) {
 	idtd[0] = (uint16_t) sizeof(idt);
 
 	asm volatile("lidt [%0]" : : "r" (&idtd));
-}
-
-void isr_handler(/*uint32_t regs[8], uint32_t vector_id, uint32_t error_code*/) {
-	/* do something */
 }

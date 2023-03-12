@@ -15,5 +15,7 @@ int kmain() {
 	idt_init();
 	idt_load();
 
+	fb_write("Finished Loading", 16);
+
 	return 0;
 }

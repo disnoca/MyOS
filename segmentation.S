@@ -1,3 +1,5 @@
+; Code for changing the Segment Registers' values
+
 global load_kernel_segments
 
 load_kernel_segments:
