@@ -32,9 +32,9 @@
 #define CURSOR_END_REGISTER     0xB     // bits 6-5: Cursor Skew
 										// bits 4-0: Cursor Scan Line End
 
-/* Cursor scanline values */
-#define MIN_SCANLINE            0
-#define MAX_SCANLINE            15
+/* Size of the framebuffer in cells */
+#define FB_WIDTH            	80
+#define FB_HEIGHT            	25
 
 /* Color codes */
 #define BLACK                   0
@@ -80,7 +80,7 @@ void cursor_move(uint16_t pos) {
 }
 
 void cursor_init(void) {
-	cursor_enable(MIN_SCANLINE, MAX_SCANLINE);
+	cursor_enable(0, FB_HEIGHT-1);
 	cursor_move(0);
 }
 
