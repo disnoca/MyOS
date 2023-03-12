@@ -107,11 +107,12 @@ static void fb_write_cell(unsigned int i, char c, uint8_t bg, uint8_t fg) {
 	fb[i*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
 }
 
-void fb_write(char* buf, unsigned int len) {
+void fb_write(char* str) {
 	uint16_t cursor_pos = get_cursor_position();
 
-	for(unsigned i = 0; i < len; i++)
-		fb_write_cell(cursor_pos + i, buf[i], BLACK, WHITE);
+	unsigned int i = 0;
+	for(; str[i] != '\0'; i++)
+		fb_write_cell(cursor_pos + i, str[i], BLACK, WHITE);
 
-	cursor_move(cursor_pos + len);
+	cursor_move(cursor_pos + i);
 }

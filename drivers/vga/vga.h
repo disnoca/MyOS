@@ -30,11 +30,10 @@ void cursor_move(uint16_t pos);
 void cursor_init(void);
 
 /** fb_write:
- *  Writes the given characters to the framebuffer
+ *  Writes the given string to the screen
  * 
- *  @param buf characters to be written
- *  @param len number of characters to be written
+ *  @param str the string to be written
 */
-void fb_write(char* buf, size_t len);
+void fb_write(char* str);
 
 #endif
