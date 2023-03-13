@@ -110,9 +110,18 @@ static void fb_write_cell(unsigned int i, char c, uint8_t bg, uint8_t fg) {
 void fb_write(char* str) {
 	uint16_t cursor_pos = get_cursor_position();
 
-	unsigned int i = 0;
-	for(; str[i] != '\0'; i++)
-		fb_write_cell(cursor_pos + i, str[i], BLACK, WHITE);
+	char curr_char;
+	unsigned i = 0;
+	for(; (curr_char = str[i]) != '\0'; i++) {
+		if(curr_char == '\n') {
+			// if a new line character is received, jump to the framebuffer's next line
+			unsigned next_line = cursor_pos/FB_WIDTH + 1;
+			cursor_pos = next_line*FB_WIDTH;
+			continue;
+		} 
 
-	cursor_move(cursor_pos + i);
+		fb_write_cell(cursor_pos++, curr_char, BLACK, WHITE);
+	}
+
+	cursor_move(cursor_pos);
 }

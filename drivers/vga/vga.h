@@ -30,7 +30,8 @@ void cursor_move(uint16_t pos);
 void cursor_init(void);
 
 /** fb_write:
- *  Writes the given string to the screen
+ *  Writes the given string to the screen.
+ *  Accepts new line characters.
  * 
  *  @param str the string to be written
 */
