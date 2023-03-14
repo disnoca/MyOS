@@ -1,9 +1,9 @@
 #include "drivers/vga/vga.h"
 #include "drivers/serial_port/serial_port.h"
+#include "libs/parse.h"
 #include "gdt.h"
 #include "segmentation.h"
 #include "idt.h"
-#include "libs/parse.h"
 
 int kmain() {
 	cursor_init();
@@ -12,9 +12,11 @@ int kmain() {
 	gdt_init();
 	gdt_load();
 	load_kernel_segments();
+	fb_write("Loaded GDT\n");
 
 	idt_init();
 	idt_load();
+	fb_write("Loaded IDT\n");
 
 	fb_write("Finished Loading.\n");
 

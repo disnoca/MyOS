@@ -17,6 +17,12 @@
 /* Framebuffer memory-mapped I/O location */
 #define FB_MMIO_LOCATION        0xB8000;
 
+static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
+										// fb[i*2 + 1]:
+										//		bit  7:	  Blink Bit
+										//      bits 6-4: Background Color
+										//      bits 3-0: Foreground Color
+
 /* I/O ports */
 #define FB_COMMAND_PORT         0x3D4
 #define FB_DATA_PORT            0x3D5
@@ -35,6 +41,7 @@
 /* Size of the framebuffer in cells */
 #define FB_WIDTH            	80
 #define FB_HEIGHT            	25
+#define FB_CELL_COUNT			FB_WIDTH * FB_HEIGHT
 
 /* Color codes */
 #define BLACK                   0
@@ -85,26 +92,52 @@ void cursor_init(void) {
 }
 
 /** fb_write_cell:
- *  Writes a character with the given foreground and background to character position i
+ *  Writes a character with the given foreground and background to character position
  *  in the framebuffer.
  *
- *  @param i  character position in the framebuffer
- *  @param c  character to be written
- *  @param bg background color
- *  @param fg foreground color
+ *  @param pos character position in the framebuffer
+ *  @param c   character to be written
+ *  @param bg  background color
+ *  @param fg  foreground color
 */
-static void fb_write_cell(unsigned int i, char c, uint8_t bg, uint8_t fg) {
-	char* fb = (char*) FB_MMIO_LOCATION;    // fb[i*2]:       Code Point
-											// fb[i*2 + 1]:
-											//		bit  7:	  Blink Bit
-											//      bits 6-4: Background Color
-											//      bits 3-0: Foreground Color
- 
+static void fb_write_cell(unsigned int pos, char c, uint8_t bg, uint8_t fg) {
 	/*  Since each character takes up two bytes of space in memory and the index is given in
-	 *  single steps, i must be multiplied by 2 to get the correct position to write the character
+	 *  single steps, pos must be multiplied by 2 to get the correct position to write the character
 	*/
-	fb[i*2] = c;
-	fb[i*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
+	fb[pos*2] = c;
+	fb[pos*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
+}
+
+/**	fb_read_cell:
+ * 	Reads and returns the data at the indicated position in the framebuffer
+ * 
+ * 	@return	the data read at the indicated position from the framebuffer
+*/
+static uint16_t fb_read_cell(unsigned int pos) {
+	uint16_t data = 0;
+
+	data |= fb[pos*2 + 1];
+	data |= (fb[pos*2] << 8);
+
+	return data;
+}
+
+/**	fb_scroll_up:
+ * 	Simulates a scroll up by copying every line's data to the line above 
+ * 	and clearing the last line.
+*/
+static void fb_scroll_up() {
+	// move every line up starting from the second
+	for(unsigned line = 1; line < FB_HEIGHT; line++)
+		for(unsigned col = 0; col < FB_WIDTH; col++) {
+			unsigned old_pos = line*FB_WIDTH + col;
+			uint16_t cell_data = fb_read_cell(old_pos);
+			fb_write_cell(old_pos - FB_WIDTH, ((cell_data >> 8) & 0xFF), ((cell_data >> 4) & 0xF), (cell_data & 0xF));
+		}
+
+	// clear the last line
+	for(unsigned i = FB_WIDTH; i > 0; i--)
+		fb_write_cell((FB_CELL_COUNT-i), 0, 0, 0);
 }
 
 void fb_write(char* str) {
@@ -113,14 +146,22 @@ void fb_write(char* str) {
 	char curr_char;
 	unsigned i = 0;
 	for(; (curr_char = str[i]) != '\0'; i++) {
-		if(curr_char == '\n') {
-			// if a new line character is received, jump to the framebuffer's next line
+		unsigned is_newline = curr_char == '\n';
+
+		// if a new line character is received, jump to the framebuffer's next line
+		if(is_newline) {
 			unsigned next_line = cursor_pos/FB_WIDTH + 1;
 			cursor_pos = next_line*FB_WIDTH;
-			continue;
-		} 
+		}
 
-		fb_write_cell(cursor_pos++, curr_char, BLACK, WHITE);
+		// if the framebuffer is full, simulate a scroll up
+		if(cursor_pos >= FB_CELL_COUNT) {
+			fb_scroll_up();
+			cursor_pos -= FB_WIDTH;
+		}
+
+		if(!is_newline)
+			fb_write_cell(cursor_pos++, curr_char, BLACK, WHITE);
 	}
 
 	cursor_move(cursor_pos);
