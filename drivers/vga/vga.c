@@ -48,6 +48,18 @@ static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
 #define WHITE                   15
 
 
+void vga_init(void) {
+	fb_clear();
+	cursor_init();
+}
+
+/* Cursor Functions */
+
+void cursor_init(void) {
+	cursor_enable(0, FB_HEIGHT-1);
+	cursor_move(0);
+}
+
 void cursor_enable(uint8_t cursor_start, uint8_t cursor_end) {
 	cursor_start &= 0x1F;   // to make sure that other fields remain untouched
 
@@ -86,9 +98,12 @@ void cursor_move(uint16_t pos) {
 	outb(FB_DATA_PORT, pos & 0xFF);
 }
 
-void cursor_init(void) {
-	cursor_enable(0, FB_HEIGHT-1);
-	cursor_move(0);
+
+/* Framebuffer Functions */
+
+void fb_clear(void) {
+	for(unsigned i = 0; i < FB_CELL_COUNT; i++)
+		fb_write_cell(i, 0, BLACK, WHITE);
 }
 
 /** fb_write_cell:
@@ -122,12 +137,6 @@ static uint16_t fb_read_cell(unsigned int pos) {
 	return data;
 }
 
-void fb_clear(void) {
-	for(unsigned i = 0; i < FB_WIDTH; i++)
-		for(unsigned j = 0; j < FB_HEIGHT; j++)
-			fb_write_cell((j*FB_WIDTH + i), 0, 0, 0);
-}
-
 /**	fb_scroll_up:
  * 	Simulates a scroll up by copying every line's data to the line above 
  * 	and clearing the last line.
@@ -143,7 +152,7 @@ static void fb_scroll_up() {
 
 	// clear the last line
 	for(unsigned i = FB_WIDTH; i > 0; i--)
-		fb_write_cell((FB_CELL_COUNT-i), 0, 0, 0);
+		fb_write_cell((FB_CELL_COUNT-i), 0, BLACK, WHITE);
 }
 
 void fb_write(char* str) {

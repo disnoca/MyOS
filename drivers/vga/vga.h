@@ -3,6 +3,11 @@
 
 #include "../../types.h"
 
+/**	vga_init:
+ * 	Clears the framebuffer and configures and enables the cursor.
+*/
+void vga_init(void);
+
 /** cursor_enable:
  *  Enables the cursor and sets the start and end scanlines
  * 
@@ -24,13 +29,12 @@ void cursor_disable(void);
 void cursor_move(uint16_t pos);
 
 /** cursor_init:
- *  Enables the cursor, setting its scanlines to their respective maximums 
- *  and sets its position to 0
+ *  Configures and enables the cursor.
 */
 void cursor_init(void);
 
 /** fb_clear:
- * 	Clears the framebuffer and resets the cursor.
+ * 	Clears the framebuffer and resets the cursor's position.
 */
 void fb_clear(void);
 

@@ -7,8 +7,7 @@
 #include "pic.h"
 
 int kmain() {
-	cursor_init();
-	fb_clear();
+	vga_init();
 	serial_init();
 
 	gdt_init();
@@ -23,7 +22,7 @@ int kmain() {
 	pic_init();
 	fb_write("Initialized PIC\n");
 
-	fb_write("Finished Loading.\n");
+	fb_write("Finished Loading\n");
 
 	return 0;
 }
