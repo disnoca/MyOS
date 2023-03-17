@@ -39,12 +39,6 @@
  * 	IRQ14-15: 	IDE Bus
 */
 
-/* PIC Mask: Disables all interrupts whose bits are set to 1. */
-void pic_set_mask(uint16_t mask) {
-	outb(MASTER_DATA_PORT, (mask & 0xFF));
-	outb(SLAVE_DATA_PORT, ((mask >> 8) & 0xFF));
-}
-
 void pic_init(void) {
 	/* ICW1 */
 	outb(MASTER_COMMAND_PORT, 0x11); 		// start initialization sequence
@@ -63,6 +57,12 @@ void pic_init(void) {
 	outb(SLAVE_DATA_PORT, 0x01); 			// set as slave
 
 	pic_set_mask(0xFFF8);					// only listen to timer and keyboard by default
+}
+
+/* PIC Mask: Disables all interrupts whose bits are set to 1. */
+void pic_set_mask(uint16_t mask) {
+	outb(MASTER_DATA_PORT, (mask & 0xFF));
+	outb(SLAVE_DATA_PORT, ((mask >> 8) & 0xFF));
 }
 
 void pic_send_eoi(uint8_t irq) {

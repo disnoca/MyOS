@@ -15,12 +15,12 @@ int kmain() {
 	load_kernel_segments();
 	fb_write("Loaded GDT\n");
 
+	pic_init();
+	fb_write("Initialized PIC\n");
+
 	idt_init();
 	idt_load();
 	fb_write("Loaded IDT\n");
-
-	pic_init();
-	fb_write("Initialized PIC\n");
 
 	fb_write("Finished Loading\n");
 

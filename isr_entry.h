@@ -34,4 +34,21 @@ void interrupt_handler_29();
 void interrupt_handler_30();
 void interrupt_handler_31();
 
+void interrupt_handler_32();
+void interrupt_handler_33();
+void interrupt_handler_34();
+void interrupt_handler_35();
+void interrupt_handler_36();
+void interrupt_handler_37();
+void interrupt_handler_38();
+void interrupt_handler_39();
+void interrupt_handler_40();
+void interrupt_handler_41();
+void interrupt_handler_42();
+void interrupt_handler_43();
+void interrupt_handler_44();
+void interrupt_handler_45();
+void interrupt_handler_46();
+void interrupt_handler_47();
+
 #endif

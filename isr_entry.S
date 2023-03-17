@@ -36,7 +36,10 @@ common_isr:                             ; the common parts of the generic interr
 	; return to the code that got interrupted
 	iret
 
+
 ; Interrupt Vectors
+
+; CPU exceptions
 no_error_isr 0
 no_error_isr 1
 no_error_isr 2
@@ -69,3 +72,21 @@ no_error_isr 28
 no_error_isr 29
 no_error_isr 30
 no_error_isr 31
+
+; PIC IRQs
+no_error_isr 32
+no_error_isr 33
+no_error_isr 34
+no_error_isr 35
+no_error_isr 36
+no_error_isr 37
+no_error_isr 38
+no_error_isr 39
+no_error_isr 40
+no_error_isr 41
+no_error_isr 42
+no_error_isr 43
+no_error_isr 44
+no_error_isr 45
+no_error_isr 46
+no_error_isr 47
