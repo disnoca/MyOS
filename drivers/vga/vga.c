@@ -18,10 +18,10 @@
 #define FB_MMIO_LOCATION        0xB8000;
 
 static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
-										// fb[i*2 + 1]:
-										//		bit  7:	  Blink Bit
-										//      bits 6-4: Background Color
-										//      bits 3-0: Foreground Color
+												// fb[i*2 + 1]:
+												//		bit  7:	  Blink Bit
+												//      bits 6-4: Background Color
+												//      bits 3-0: Foreground Color
 
 /* I/O ports */
 #define FB_COMMAND_PORT         0x3D4

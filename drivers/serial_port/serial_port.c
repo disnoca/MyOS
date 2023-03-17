@@ -24,53 +24,11 @@
 #define SERIAL_COM1_BASE                	0x3F8      /* COM1 base port */
 
 #define SERIAL_DATA_PORT(base)              (base)
-
-/* This register allows you to control when and how the UART is going to trigger an interrupt event with the hardware interrupt associated with the serial COM port. */
-#define SERIAL_INTERRUPT_ENABLE_PORT(base)  (base + 1)      // bits 7-6: Reserved
-															// bit  5:   Enable Low Power Mode
-															// bit  4:   Enable Sleep Mode
-															// bit  3:   Enable Modem Status Interrupt
-															// bit  2:   Enable Receiver Line Status Interrupt
-															// bit  1:   Enable Transmitter Holding Register Empty Interrupt
-															// bit  0:   Enable Received Data Available Interrupt
-
-/* This register is used to control how the First In/First Out (FIFO) buffers will behave on the chip */
-#define SERIAL_FIFO_COMMAND_PORT(base)      (base + 2)      // bits 7-6: number of bytes to store in the FIFOs (1/1, 4/16, 8/32, 14/56)
-															// bit 5:    Enable 64 Byte FIFO
-															// bit 4:    Reserved
-															// bit 3:    DMA Mode Select
-															// bit 2:    Clear Transmit FIFO
-															// bit 1:    Clear Receive FIFO
-															// bit 0:    Enable FIFOs
-
-/* This register has two major purposes:
- *  - Setting the Divisor Latch Access Bit (DLAB), allowing you to set the values of the Divisor Latch Bytes.
- *  - Setting the bit patterns that will be used for both receiving and transmitting the serial data.
-*/
-#define SERIAL_LINE_COMMAND_PORT(base)      (base + 3)      // bit  7:   Enable DLAB
-															// bit  6:   Enable break control
-															// bits 5-3: Parity Select                  (no parity, odd parity, even parity, mark, space)
-															// bit  2:   Stop Bits                      (1, 1.5 or 2)
-															// bits 1-0: Data Word Length               (5, 6, 7, 8)
-
-/* This register allows you to do "hardware" flow control, under software control. */                         
-#define SERIAL_MODEM_COMMAND_PORT(base)     (base + 4)      // bits 7-6: Reserved
-															// bit  5:   Enable Autoflow Control
-															// bit  4:   Loopback Mode
-															// bit  3:   Auxiliary Output 2 (used for receiving interrupts)
-															// bit  2:   Auxiliary Output 1
-															// bit  1:   Request To Send
-															// bit  0:   Data Terminal Ready
-
-/* This register is used primarily to give you information on possible error conditions that may exist within the UART, based on the data that has been received. */
-#define SERIAL_LINE_STATUS_PORT(base)       (base + 5)      // bit 7: Error in Received FIFO
-															// bit 6: Empty Data Holding Registers
-															// bit 5: Empty Transmitter Holding Registers
-															// bit 4: Break Interrupt
-															// bit 3: Framing Error
-															// bit 2: Parity Error
-															// bit 1: Overrun Error
-															// bit 0: Data Ready
+#define SERIAL_INTERRUPT_ENABLE_PORT(base)  (base + 1)
+#define SERIAL_FIFO_COMMAND_PORT(base)      (base + 2)
+#define SERIAL_LINE_COMMAND_PORT(base)      (base + 3)
+#define SERIAL_MODEM_COMMAND_PORT(base)     (base + 4)
+#define SERIAL_LINE_STATUS_PORT(base)       (base + 5)
 
 /* The I/O port commands */
 

@@ -4,6 +4,7 @@
 #include "gdt.h"
 #include "segmentation.h"
 #include "idt.h"
+#include "pic.h"
 
 int kmain() {
 	cursor_init();
@@ -17,6 +18,9 @@ int kmain() {
 	idt_init();
 	idt_load();
 	fb_write("Loaded IDT\n");
+
+	pic_init();
+	fb_write("Initialized PIC\n");
 
 	fb_write("Finished Loading.\n");
 
