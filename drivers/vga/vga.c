@@ -101,11 +101,6 @@ void cursor_move(uint16_t pos) {
 
 /* Framebuffer Functions */
 
-void fb_clear(void) {
-	for(unsigned i = 0; i < FB_CELL_COUNT; i++)
-		fb_write_cell(i, 0, BLACK, WHITE);
-}
-
 /** fb_write_cell:
  *  Writes a character with the given foreground and background to character position
  *  in the framebuffer.
@@ -153,6 +148,11 @@ static void fb_scroll_up() {
 	// clear the last line
 	for(unsigned i = FB_WIDTH; i > 0; i--)
 		fb_write_cell((FB_CELL_COUNT-i), 0, BLACK, WHITE);
+}
+
+void fb_clear(void) {
+	for(unsigned i = 0; i < FB_CELL_COUNT; i++)
+		fb_write_cell(i, 0, BLACK, WHITE);
 }
 
 void fb_write(char* str) {
