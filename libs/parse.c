@@ -1,7 +1,5 @@
 #include "parse.h"
 
-#define MAX_32BIT_DIGITS 10
-
 #define START_32BIT_PARSE_VALUE 1000000000
 
 void parse_unsigned(char* buf, unsigned int val) {
