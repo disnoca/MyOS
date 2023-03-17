@@ -1,3 +1,5 @@
+#include "types.h"
+
 /**	pic_init:
  * 	Initializes the PIC.
 */
