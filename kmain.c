@@ -8,6 +8,7 @@
 
 int kmain() {
 	cursor_init();
+	fb_clear();
 	serial_init();
 
 	gdt_init();

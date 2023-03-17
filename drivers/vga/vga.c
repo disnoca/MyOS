@@ -122,6 +122,12 @@ static uint16_t fb_read_cell(unsigned int pos) {
 	return data;
 }
 
+void fb_clear(void) {
+	for(unsigned i = 0; i < FB_WIDTH; i++)
+		for(unsigned j = 0; j < FB_HEIGHT; j++)
+			fb_write_cell((j*FB_WIDTH + i), 0, 0, 0);
+}
+
 /**	fb_scroll_up:
  * 	Simulates a scroll up by copying every line's data to the line above 
  * 	and clearing the last line.
