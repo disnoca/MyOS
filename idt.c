@@ -86,23 +86,22 @@ void idt_init(void) {
 	encode_igd(30, (uint32_t) interrupt_handler_30, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 	encode_igd(31, (uint32_t) interrupt_handler_31, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 
-	// if I encode more than 7 grub doesnt load?????
-	//encode_igd(32, (uint32_t) interrupt_handler_32, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(33, (uint32_t) interrupt_handler_33, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(34, (uint32_t) interrupt_handler_34, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(35, (uint32_t) interrupt_handler_35, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(36, (uint32_t) interrupt_handler_36, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(37, (uint32_t) interrupt_handler_37, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(38, (uint32_t) interrupt_handler_38, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(39, (uint32_t) interrupt_handler_39, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(40, (uint32_t) interrupt_handler_40, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(41, (uint32_t) interrupt_handler_41, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(42, (uint32_t) interrupt_handler_42, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(43, (uint32_t) interrupt_handler_43, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(44, (uint32_t) interrupt_handler_44, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(45, (uint32_t) interrupt_handler_45, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(46, (uint32_t) interrupt_handler_46, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-	//encode_igd(47, (uint32_t) interrupt_handler_47, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(32, (uint32_t) interrupt_handler_32, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(33, (uint32_t) interrupt_handler_33, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(34, (uint32_t) interrupt_handler_34, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(35, (uint32_t) interrupt_handler_35, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(36, (uint32_t) interrupt_handler_36, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(37, (uint32_t) interrupt_handler_37, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(38, (uint32_t) interrupt_handler_38, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(39, (uint32_t) interrupt_handler_39, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(40, (uint32_t) interrupt_handler_40, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(41, (uint32_t) interrupt_handler_41, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(42, (uint32_t) interrupt_handler_42, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(43, (uint32_t) interrupt_handler_43, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(44, (uint32_t) interrupt_handler_44, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(45, (uint32_t) interrupt_handler_45, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(46, (uint32_t) interrupt_handler_46, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
+	encode_igd(47, (uint32_t) interrupt_handler_47, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 }
 
 

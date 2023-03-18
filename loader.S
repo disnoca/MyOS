@@ -4,15 +4,17 @@ CHECKSUM     equ -MAGIC_NUMBER-FLAGS  			; calculate the checksum
 												; (magic number + checksum + flags should equal 0)
 KERNEL_STACK_SIZE equ 4096      				; size of stack in bytes
 
+section .multiboot
+
+align 4
+dd MAGIC_NUMBER             				; write the magic number to the machine code,
+dd FLAGS                    				; the flags,
+dd CHECKSUM                 				; and the checksum
+
 section .text                   				; start of the text (code) section
 
 global loader                   				; the entry symbol for ELF
 extern kmain             						; the function sum_of_three is defined elsewhere
-
-align 4                         				; the code must be 4 byte aligned
-	dd MAGIC_NUMBER             				; write the magic number to the machine code,
-	dd FLAGS                    				; the flags,
-	dd CHECKSUM                 				; and the checksum
 
 loader:                         				; the loader label (defined as entry point in linker script)
 	cli        									; disables interrupts
