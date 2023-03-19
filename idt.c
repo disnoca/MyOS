@@ -117,4 +117,5 @@ void idt_load(void) {
 	idtd[0] = (uint16_t) sizeof(idt);
 
 	asm volatile("lidt [%0]" : : "r" (&idtd));
+	asm("sti");
 }
