@@ -20,7 +20,9 @@ loader:                         				; the loader label (defined as entry point i
 	cli        									; disables interrupts
 	mov esp, kernel_stack + KERNEL_STACK_SIZE   ; point esp to the start of the stack (end of memory area)
 	call kmain
-	hlt
+
+loop:
+	jmp loop
 
 section .bss
 

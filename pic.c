@@ -56,7 +56,7 @@ void pic_init(void) {
 	outb(MASTER_DATA_PORT, 0x05); 			// set as master
 	outb(SLAVE_DATA_PORT, 0x01); 			// set as slave
 
-	pic_set_mask(0xFFF8);					// only listen to timer and keyboard by default
+	pic_set_mask(0xFFFD);					// only listen to keyboard by default
 }
 
 /* PIC Mask: Disables all interrupts whose bits are set to 1. */
