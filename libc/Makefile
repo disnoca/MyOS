@@ -3,7 +3,7 @@ AS?=-masm=intel -f elf
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=-nostdlib -lk -lgcc
-LIBK_CFLAGS:=$(CFLAGS)
+LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 
 DESTDIR?=
 PREFIX?=/usr/local

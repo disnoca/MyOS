@@ -10,8 +10,11 @@
  * @author Samuel Pires
 */
 
-#include <kernel/vga.h>
+#include "vga.h"
 #include "../arch/i386/io.h"
+
+#include <stdint.h>
+#include <stddef.h>
 
 /* Framebuffer memory-mapped I/O location */
 #define FB_MMIO_LOCATION        0xB8000;
@@ -47,26 +50,16 @@ static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
 #define WHITE                   15
 
 
-void vga_init(void) {
-	fb_clear();
-	cursor_init();
-}
+static uint16_t cursor_pos;
 
 /* Cursor Functions */
 
-void cursor_init(void) {
-	cursor_enable(0, FB_HEIGHT-1);
-	cursor_move(0);
-}
-
-void cursor_enable(uint8_t cursor_start, uint8_t cursor_end) {
-	cursor_start &= 0x1F;   // to make sure that other fields remain untouched
-
+void cursor_enable(void) {
 	outb(FB_COMMAND_PORT, CURSOR_START_REGISTER);
-	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xC0) | cursor_start);
+	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xC0) | 0);
 
 	outb(FB_COMMAND_PORT, CURSOR_END_REGISTER);
-	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xE0) | cursor_end);
+	outb(FB_DATA_PORT, (inb(FB_DATA_PORT) & 0xE0) | (FB_HEIGHT-1));
 }
 
 void cursor_disable(void) {
@@ -74,29 +67,32 @@ void cursor_disable(void) {
 	outb(FB_DATA_PORT, 0x20);
 }
 
-/** get_cursor_position:
- *  Returns the cursor's position.
- * 
- *  @return the cursor's position
+/** cursor_move:
+ *  Moves the cursor of the framebuffer to the given position
+ *
+ *  @param pos new position of the cursor
 */
-static uint16_t get_cursor_position(void) {
-	uint16_t pos = 0;
-	
-	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-	pos |= inb(FB_DATA_PORT);
-	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-	pos |= ((uint16_t) inb(FB_DATA_PORT)) << 8;
-
-	return pos;
-}
-
-void cursor_move(uint16_t pos) {
+static void cursor_move(uint16_t pos) {
 	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
 	outb(FB_DATA_PORT, (pos >> 8) & 0xFF);
 	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
 	outb(FB_DATA_PORT, pos & 0xFF);
 }
 
+/** cursor_init:
+ *  Configures and enables the cursor.
+*/
+static void cursor_init(void) {
+	cursor_enable();
+	cursor_move(0);
+	cursor_pos = 0;
+}
+
+
+void vga_init(void) {
+	fb_clear();
+	cursor_init();
+}
 
 /* Framebuffer Functions */
 
@@ -154,28 +150,35 @@ void fb_clear(void) {
 		fb_write_cell(i, 0, BLACK, WHITE);
 }
 
-void fb_write(char* str) {
-	uint16_t cursor_pos = get_cursor_position();
+void fb_write(const char* data, size_t size) {
+	for(unsigned i = 0; i < size; i++)
+		fb_writechar(data[i++]);
 
-	char curr_char;
+	cursor_move(cursor_pos);
+}
+
+void fb_writestring(const char* data) {
 	unsigned i = 0;
-	for(; (curr_char = str[i]) != '\0'; i++) {
-		unsigned is_newline = curr_char == '\n';
+	
+	while(data[i])
+		fb_writechar(data[i++]);
 
-		// if a new line character is received, jump to the framebuffer's next line
-		if(is_newline) {
-			unsigned next_line = cursor_pos/FB_WIDTH + 1;
-			cursor_pos = next_line*FB_WIDTH;
-		}
+	cursor_move(cursor_pos);
+}
 
-		// if the framebuffer is full, simulate a scroll up
-		if(cursor_pos >= FB_CELL_COUNT) {
-			fb_scroll_up();
-			cursor_pos -= FB_WIDTH;
-		}
+void fb_writechar(char c) {
+	// if a new line character is received, jump to the framebuffer's next line
+	if(c == '\n') {
+		unsigned next_line = cursor_pos/FB_WIDTH + 1;
+		cursor_pos = next_line*FB_WIDTH;
+	} 
+	else
+		fb_write_cell(cursor_pos++, c, BLACK, WHITE);
 
-		if(!is_newline)
-			fb_write_cell(cursor_pos++, curr_char, BLACK, WHITE);
+	// if the framebuffer is full, simulate a scroll up
+	if(cursor_pos >= FB_CELL_COUNT) {
+		fb_scroll_up();
+		cursor_pos -= FB_WIDTH;
 	}
 
 	cursor_move(cursor_pos);

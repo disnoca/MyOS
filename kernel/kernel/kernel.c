@@ -1,25 +1,28 @@
-#include <kernel/vga.h>
+#include <kernel/tty.h>
 #include <kernel/gdt.h>
 #include <kernel/segmentation.h>
 #include <kernel/pic.h>
 #include <kernel/idt.h>
 
+#include <stdio.h>
+
 int kmain() {
-	vga_init();
+	tty_init();
+	printf("Initialized TTY\n");
 
 	gdt_init();
 	gdt_load();
 	load_kernel_segments();
-	fb_write("Loaded GDT\n");
+	printf("Loaded GDT\n");
 
 	pic_init();
-	fb_write("Initialized PIC\n");
+	printf("Initialized PIC\n");
 
 	idt_init();
 	idt_load();
-	fb_write("Loaded IDT\n");
+	printf("Loaded IDT\n");
 
-	fb_write("Finished Loading\n");
+	printf("Finished Loading\n");
 
 	return 0;
 }
