@@ -1,5 +1,7 @@
 {
 	"files.associations": {
-		"idt.h": "c"
+		"idt.h": "c",
+		"tty.h": "c",
+		"pic.h": "c"
 	}
 }
