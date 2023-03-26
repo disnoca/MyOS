@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include <kernel/pic.h>
-#include "../../drivers/keyboard.h"
+#include "../../drivers/keyboard/keyboard.h"
 
 #define PIC_OFFSET 32
 

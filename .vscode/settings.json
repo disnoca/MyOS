@@ -2,6 +2,8 @@
 	"files.associations": {
 		"idt.h": "c",
 		"tty.h": "c",
-		"pic.h": "c"
+		"pic.h": "c",
+		"stdint.h": "c",
+		"io.h": "c"
 	}
 }

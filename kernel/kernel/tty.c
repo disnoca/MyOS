@@ -1,5 +1,5 @@
 #include <kernel/tty.h>
-#include "../drivers/vga.h"
+#include "../drivers/vga/vga.h"
 
 void tty_init(void) {
 	vga_init();

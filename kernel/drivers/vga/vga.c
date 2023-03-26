@@ -11,7 +11,7 @@
 */
 
 #include "vga.h"
-#include "../arch/i386/io.h"
+#include "../../arch/i386/io.h"
 
 #include <stdint.h>
 #include <stddef.h>

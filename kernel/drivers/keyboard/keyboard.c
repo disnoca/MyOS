@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "../arch/i386/io.h"
+#include "../../arch/i386/io.h"
 #include <kernel/tty.h>
 
 #include <stdio.h>
