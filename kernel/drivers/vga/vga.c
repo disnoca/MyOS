@@ -167,15 +167,26 @@ void fb_writestring(const char* data) {
 }
 
 void fb_writechar(char c) {
-	// if a new line character is received, jump to the framebuffer's next line
-	if(c == '\n') {
-		unsigned next_line = cursor_pos/FB_WIDTH + 1;
-		cursor_pos = next_line*FB_WIDTH;
-	} 
-	else
-		fb_write_cell(cursor_pos++, c, BLACK, WHITE);
+	switch(c) {
+	
+	case('\n'):
+		/* jump to the framebuffer's next line */
+		cursor_pos = (cursor_pos/FB_WIDTH + 1) * FB_WIDTH; 
+		break;
 
-	// if the framebuffer is full, simulate a scroll up
+	case('\b'): 
+		/* clean and move to previous cell (if not it the first one) */
+		if(cursor_pos)
+			fb_write_cell(--cursor_pos, 0, BLACK, WHITE);
+		break;
+
+	/* any character to be actually written (in ASCII) */
+	default:
+		fb_write_cell(cursor_pos++, c, BLACK, WHITE);
+		break;
+	}	
+
+	/* if the framebuffer is full, simulate a scroll up */
 	if(cursor_pos >= FB_CELL_COUNT) {
 		fb_scroll_up();
 		cursor_pos -= FB_WIDTH;
