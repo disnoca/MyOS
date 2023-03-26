@@ -1,7 +1,11 @@
+; Multiboot head flags
+MEM_FLAG  equ 0x00000001
+MODS_FLAG equ 0x00000008
+
 ; Declare constants for the multiboot header.
-FLAGS equ    0x0 ; this is the Multiboot 'flag' field
-MAGIC equ    0x1BADB002       ; 'magic number' lets bootloader find the header
-CHECKSUM equ -(MAGIC + FLAGS) ; checksum of above, to prove we are multiboot
+FLAGS 	 equ    MODS_FLAG
+MAGIC 	 equ    0x1BADB002
+CHECKSUM equ 	-(MAGIC + FLAGS)
 
 KERNEL_STACK_SIZE equ 4096
 
@@ -25,14 +29,15 @@ extern kmain
 global _start
 
 _start:
+	; disable interrupts
 	cli
 
-	mov esp, kernel_stack + KERNEL_STACK_SIZE   ; point esp to the start of the stack (end of memory area)
+	; point esp to the start of the stack (end of memory area)
+	mov esp, kernel_stack + KERNEL_STACK_SIZE
 
 	; Call the global constructors.
 	call _init
 
-	; Transfer control to the main kernel.
 	call kmain
 
 _loop:
