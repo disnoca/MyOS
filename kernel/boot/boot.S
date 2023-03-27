@@ -1,9 +1,5 @@
-; Multiboot head flags
-MEM_FLAG  equ 0x00000001
-MODS_FLAG equ 0x00000008
-
 ; Declare constants for the multiboot header.
-FLAGS 	 equ    MODS_FLAG
+FLAGS 	 equ    0x0
 MAGIC 	 equ    0x1BADB002
 CHECKSUM equ 	-(MAGIC + FLAGS)
 
