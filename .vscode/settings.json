@@ -4,6 +4,7 @@
 		"tty.h": "c",
 		"pic.h": "c",
 		"stdint.h": "c",
-		"io.h": "c"
+		"io.h": "c",
+		"layouts.h": "c"
 	}
 }

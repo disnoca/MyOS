@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define KBD_DATA_PORT    0x60
 
@@ -19,10 +20,10 @@
 #define CAPS_LOCK_FLAG 	 0x40
 uint8_t special_keys_flags = 0;
 
-#define SHIFT_MASK 		 (LEFT_SHIFT_FLAG | RIGHT_SHIFT_FLAG)
-#define CTRL_MASK 		 (LEFT_CTRL_FLAG | RIGHT_CTRL_FLAG)
-#define USE_CAPS_MASK 	 (SHIFT_MASK | CAPS_LOCK_FLAG)
-#define USE_COMMAND_MASK (CTRL_MASK | LEFT_ALT_FLAG)
+#define SHIFT_FLAGS 		 (LEFT_SHIFT_FLAG | RIGHT_SHIFT_FLAG)
+#define CTRL_FLAGS 		 (LEFT_CTRL_FLAG | RIGHT_CTRL_FLAG)
+#define ALT_FLAGS 		 (LEFT_ALT_FLAG | RIGHT_ALT_FLAG)
+#define USE_CAPS_FLAGS 	 (SHIFT_FLAGS | CAPS_LOCK_FLAG)
 
 
 #define UPPERCASE_TO_LOWERCASE_DIFF ('a' - 'A')
@@ -32,10 +33,12 @@ uint8_t special_keys_flags = 0;
  * 	Reads the received scan code and returns the corresponding character.
  * 	Returned letters are always in lowercase.
  * 
- * 	@param scan_code the scan code
- * 	@return			 the corresponding character
+ * 	@param scan_code 	 the scan code
+ * 	@param shift_pressed whether the shift key is being pressed or not
+ * 	@param altgr_pressed whether the altgr key is being pressed or not
+ * 	@return			 	 the corresponding character
 */
-const char (*read_key)(uint8_t, uint8_t, uint8_t) = read_key_portuguese;
+char (*read_key)(uint8_t, bool, bool) = read_key_portuguese;
 
 
 /**	read_special_key:
@@ -46,7 +49,7 @@ const char (*read_key)(uint8_t, uint8_t, uint8_t) = read_key_portuguese;
  * 	@param scan_code 		 the scan code's least significant byte
  * 	@return				 	 1 if the scan code was a special key, 0 otherwise
 */
-static uint8_t read_special_key(uint8_t had_extended_byte, uint8_t scan_code) {
+static uint8_t read_special_key(uint8_t scan_code, bool had_extended_byte) {
 	switch (scan_code) {
 
 	/* enable special key flag when key is pressed */
@@ -97,27 +100,33 @@ static uint8_t read_special_key(uint8_t had_extended_byte, uint8_t scan_code) {
 
 void read_input_from_keyboard(void) {
     uint8_t scan_code = inb(KBD_DATA_PORT);
-	uint8_t had_extended_byte = 0;
+	bool had_extended_byte = 0;
 
 	if(scan_code == EXTENDED_KEY) {
 		scan_code = inb(KBD_DATA_PORT);
 		had_extended_byte = 1;
 	}
 
-	if(read_special_key(had_extended_byte, scan_code))
+	if(read_special_key(scan_code, had_extended_byte))
 		return;
 
-	/* return on (non-special) key released or special key that doesn't return a character */
-	if(scan_code >> 7 || (special_keys_flags & USE_COMMAND_MASK))
+	/* return on (non-special) key released */
+	if(scan_code >> 7)
 		return;
 
-	char c = read_key(scan_code, special_keys_flags & SHIFT_MASK, special_keys_flags & RIGHT_ALT_FLAG);
+	char c = read_key(scan_code,
+					  /* shift is being pressed */
+					  (special_keys_flags & SHIFT_FLAGS),
+					  /* for some reason altgr is sending both alts instead of the expected alt+ctrl as scan
+	  					 codes therefore we check if both alt flags are set to see if altgr is being pressed */
+					  ((special_keys_flags & ALT_FLAGS) == ALT_FLAGS));
 
 	/* invalid/not yet implemented character */
 	if(c == 0)
 		return;
 
-	if(IS_LOWERCASE_LETTER(c) && (special_keys_flags & USE_CAPS_MASK))
+	/* returned char is a (always lowercase) letter and caps or shift are active */
+	if((c >= 'a' && c <= 'z') && (special_keys_flags & USE_CAPS_FLAGS))
 		c -= UPPERCASE_TO_LOWERCASE_DIFF;
 
 	tty_putchar(c);

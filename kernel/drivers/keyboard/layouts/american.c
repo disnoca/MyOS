@@ -1,8 +1,6 @@
 #include "layouts.h"
 
-#include <stdint.h>
-
-char read_key_american(uint8_t scan_code, uint8_t shift_pressed, uint8_t right_alt_pressed) {
+char read_key_american(uint8_t scan_code, bool shift_pressed, __attribute__((unused)) bool altgr_pressed) {
 
 	if(shift_pressed)
 		switch(scan_code) {

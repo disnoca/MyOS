@@ -2,6 +2,7 @@
 #define LAYOUTS
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define SCAN_CODE_A 			0x1E
 #define SCAN_CODE_B 			0x30
@@ -64,8 +65,8 @@
 #define SCAN_CODE_ALT 			0x38
 #define SCAN_CODE_CAPS_LOCK 	0x3A
 
-char read_key_portuguese(uint8_t scan_code, uint8_t shift_pressed, uint8_t right_alt_pressed);
+char read_key_portuguese(uint8_t scan_code, bool shift_pressed, bool altgr_pressed);
 
-char read_key_american(uint8_t scan_code, uint8_t shift_pressed, uint8_t right_alt_pressed);
+char read_key_american(uint8_t scan_code, bool shift_pressed, bool altgr_pressed);
 
 #endif

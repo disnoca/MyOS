@@ -1,8 +1,6 @@
 #include "layouts.h"
 
-#include <stdint.h>
-
-char read_key_portuguese(uint8_t scan_code, uint8_t shift_pressed, uint8_t right_alt_pressed) {
+char read_key_portuguese(uint8_t scan_code, bool shift_pressed, bool altgr_pressed) {
 	if(shift_pressed)
 		switch(scan_code) {
 		case(SCAN_CODE_BACKTICK): return '|';
@@ -30,7 +28,7 @@ char read_key_portuguese(uint8_t scan_code, uint8_t shift_pressed, uint8_t right
 		default: break;
 		}
 
-	if(right_alt_pressed)
+	if(altgr_pressed)
 		switch(scan_code) {
 		case(SCAN_CODE_2): return '@';
 		//case(SCAN_CODE_3): return '£';
@@ -42,7 +40,7 @@ char read_key_portuguese(uint8_t scan_code, uint8_t shift_pressed, uint8_t right
 		case(SCAN_CODE_0): return '}';
 		//case(SCAN_CODE_LEFT_BRACKET): return '¨';
 		//case(SCAN_CODE_E): return '€';
-		default: break;
+		default: return 0;
 		}
 	
 	switch(scan_code) {
@@ -99,6 +97,6 @@ char read_key_portuguese(uint8_t scan_code, uint8_t shift_pressed, uint8_t right
 	case(SCAN_CODE_SPACE): return ' ';
 	case(SCAN_CODE_ENTER): return '\n';
 	case(SCAN_CODE_BACKSPACE): return '\b';
-	default: return scan_code;
+	default: return 0;
 	}
 }
