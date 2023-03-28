@@ -1,9 +1,9 @@
 #include <limits.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static bool printint(int val, signed char base, bool sign) {
 	char numerals[] = "0123456789ABCDEF";
@@ -13,7 +13,7 @@ static bool printint(int val, signed char base, bool sign) {
 	int i = 0;
 	if(sign) {
 		do {
-			buf[i++] = numerals[(val - 2*val) % base];	// TODO: create abs, this is wrong
+			buf[i++] = numerals[abs(val) % base];
 		} while((val /= base) != 0);
 		buf[i++] = '-';
 	}
