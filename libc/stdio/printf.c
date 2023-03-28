@@ -1,8 +1,37 @@
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+static bool printint(int val, signed char base, bool sign) {
+	char numerals[] = "0123456789ABCDEF";
+	char buf[32*8];
+	unsigned uval = (unsigned) val;
+
+	int i = 0;
+	if(sign) {
+		do {
+			buf[i++] = numerals[(val - 2*val) % base];	// TODO: create abs, this is wrong
+		} while((val /= base) != 0);
+		buf[i++] = '-';
+	}
+	else
+		do {
+			buf[i++] = numerals[uval % base];
+		} while((uval /= base) != 0);		
+
+	if(base == 16) {
+		buf[i++] = 'x';
+		buf[i++] = '0';
+	}
+
+	while(--i >= 0)
+		putchar(buf[i]);
+
+	return true;
+}
 
 static bool print(const char* data, size_t length) {
 	const unsigned char* bytes = (const unsigned char*) data;
@@ -61,7 +90,28 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
-		} else {
+		} else if (*format == 'u' || *format == 'd') {
+			bool is_signed = (*format == 'd');
+			format++;
+			int val = va_arg(parameters, int);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!printint(val, 10, is_signed))
+				return -1;
+			written++;
+		} else if (*format == 'x' || *format == 'p') {
+			format++;
+			int val = va_arg(parameters, int);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!printint(val, 16, false))
+				return -1;
+			written++;
+		}else {
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {
