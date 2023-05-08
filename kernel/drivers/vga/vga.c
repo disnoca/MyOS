@@ -67,7 +67,7 @@ void cursor_disable(void) {
 	outb(FB_DATA_PORT, 0x20);
 }
 
-/** cursor_move:
+/**
  *  Moves the cursor of the framebuffer to the given position
  *
  *  @param pos new position of the cursor
@@ -79,7 +79,7 @@ static void cursor_move(uint16_t pos) {
 	outb(FB_DATA_PORT, pos & 0xFF);
 }
 
-/** cursor_init:
+/**
  *  Configures and enables the cursor.
 */
 static void cursor_init(void) {
@@ -96,7 +96,7 @@ void vga_init(void) {
 
 /* Framebuffer Functions */
 
-/** fb_write_cell:
+/**
  *  Writes a character with the given foreground and background to character position
  *  in the framebuffer.
  *
@@ -113,7 +113,7 @@ static void fb_write_cell(unsigned int pos, char c, uint8_t bg, uint8_t fg) {
 	fb[pos*2 + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F);
 }
 
-/**	fb_read_cell:
+/**
  * 	Reads and returns the data at the indicated position in the framebuffer
  * 
  * 	@return	the data read at the indicated position from the framebuffer
@@ -127,7 +127,7 @@ static uint16_t fb_read_cell(unsigned int pos) {
 	return data;
 }
 
-/**	fb_scroll_up:
+/**
  * 	Simulates a scroll up by copying every line's data to the line above 
  * 	and clearing the last line.
 */

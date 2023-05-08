@@ -29,7 +29,7 @@ uint8_t special_keys_flags = 0;
 #define UPPERCASE_TO_LOWERCASE_DIFF ('a' - 'A')
 #define IS_LOWERCASE_LETTER(c)		(c >= 'a' && c <= 'z')
 
-/**	read_key:
+/**
  * 	Reads the received scan code and returns the corresponding character.
  * 	Returned letters are always in lowercase.
  * 
@@ -41,7 +41,7 @@ uint8_t special_keys_flags = 0;
 char (*read_key)(uint8_t, bool, bool) = read_key_portuguese;
 
 
-/**	read_special_key:
+/**
  * 	Reads the received scan code and updates the special keys flags accordingly,
  * 	returning 1 if the scan code was a special key, 0 otherwise.
  * 

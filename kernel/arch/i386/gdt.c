@@ -110,7 +110,7 @@ static struct gdt gdt;
 *	bits 15-0:  Segment Limit [15:0]
 */
 
-/** encode_segment_descriptor:
+/**
  * 	Encodes the Segment Descriptor with the given values.
  * 
  * 	@param entry 		the Segment Descriptor
