@@ -1,5 +1,5 @@
-#ifndef ISR
-#define ISR
+#ifndef _KERNEL_ISR_H
+#define _KERNEL_ISR_H
 
 void interrupt_handler_0();
 void interrupt_handler_1();

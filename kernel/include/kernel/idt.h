@@ -1,3 +1,6 @@
+#ifndef _KERNEL_IDT_H
+#define _KERNEL_IDT_H
+
 /**
  * 	Encodes the Interrupt Descriptor Table with the ISR Handlers.
 */
@@ -8,3 +11,5 @@ void idt_init(void);
  * 	and enables interrupts.
 */
 void idt_load(void);
+
+#endif

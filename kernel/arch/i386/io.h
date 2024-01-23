@@ -1,5 +1,5 @@
-#ifndef IO
-#define IO
+#ifndef _KERNEL_IO_H
+#define _KERNEL_IO_H
 
 #include <stdint.h>
 

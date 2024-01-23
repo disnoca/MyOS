@@ -1,5 +1,5 @@
-#ifndef GDT
-#define GDT
+#ifndef _KERNEL_GDT_H
+#define _KERNEL_GDT_H
 
 /**
  * 	Encodes the Global Descriptor Table for Flat-Memory Model (no segmentation)
