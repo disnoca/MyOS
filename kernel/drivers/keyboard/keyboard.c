@@ -51,7 +51,8 @@ static char (*scan_to_ascii)[SCAN_TO_ASCII_TABLE_SIZE] = scan_to_ascii_pt;
  * 	@param scan_code 		 the scan code's least significant byte
  * 	@return				 	 1 if the scan code was a special key, 0 otherwise
 */
-static uint8_t read_special_key(uint8_t scan_code, bool had_extended_byte) {
+static uint8_t read_special_key(uint8_t scan_code, bool had_extended_byte)
+{
 	switch (scan_code) {
 
 	/* enable special key flag when key is pressed */
@@ -100,7 +101,8 @@ static uint8_t read_special_key(uint8_t scan_code, bool had_extended_byte) {
 	return 1;
 }
 
-void read_input_from_keyboard(void) {
+void read_input_from_keyboard(void)
+{
     uint8_t scan_code = inb(KBD_DATA_PORT);
 	bool had_extended_byte = 0;
 

@@ -2,7 +2,7 @@
  * Code for setting up the Interrupt Descriptor Table.
  * 
  * Refer to:
- * AMD64 Architecture Programmer's Manual Volume 2: System Programming Section 4
+ * Intel Software Developer Manual, Volume 3-A: Chapter 6.11: Interrupt Descriptors
  * https://wiki.osdev.org/Interrupt_Descriptor_Table
  * 
  * @author Samuel Pires
@@ -21,12 +21,12 @@
 #define BIT32_INTERRUPT_GATE         0xE
 
 /* Interrupt/Trap Gate Descriptor
- *   bits 63-48: offset [31:16]
- *   bits 47-44: flags
- *   bits 43-40: gate type
- *   bits 39-32: reserved
- *   bits 31-16: segment selector
- *   bits 15-0:  offset [15:0]
+ *   bits 63:48 - offset [31:16]
+ *   bits 47:44 - flags
+ *   bits 43:40 - gate type
+ *   bits 39:32 - reserved
+ *   bits 31:16 - segment selector
+ *   bits 15:0  - offset [15:0]
 */
 struct igd {
 	uint16_t offset_lb;
@@ -38,7 +38,16 @@ struct igd {
 
 static struct igd idt[HARDWARE_INTERRUPT_ENTRIES + IRQ_ENTRIES];
 
-static void encode_igd(unsigned int vector_id, uint32_t handler, uint8_t flags, uint8_t type) {
+/**
+ * Encodes the Interrupt Gate Descriptor with the given values.
+ * 
+ * @param vector_id the interrupt vector id
+ * @param handler the address of the interrupt handler
+ * @param flags the interrupt flags
+ * @param type the interrupt type
+*/
+static void encode_igd(unsigned int vector_id, uint32_t handler, uint8_t flags, uint8_t type)
+{
 	// only 4 bits of both the flags and type are used
 
 	// encode the offset
@@ -52,7 +61,8 @@ static void encode_igd(unsigned int vector_id, uint32_t handler, uint8_t flags, 
 	idt[vector_id].flags_and_type = (uint8_t) ((flags << 4) | (type & 0x0F));
 }
 
-void idt_init(void) {
+void idt_init(void)
+{
 	encode_igd(0, (uint32_t) interrupt_handler_0, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 	encode_igd(1, (uint32_t) interrupt_handler_1, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 	encode_igd(2, (uint32_t) interrupt_handler_2, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
@@ -106,16 +116,17 @@ void idt_init(void) {
 
 
 /* Interrupt Descriptor Table Pseudo-Descriptor 
- *  bits 36-16: the Interrupt Descriptor Table's base address
- *  bits 15-0:  the Interrupt Descriptor Table's size
+ *  bits 36:16 - the Interrupt Descriptor Table's base address
+ *  bits 15:0  - the Interrupt Descriptor Table's size
 */
 static uint16_t idtd[3];
 
-void idt_load(void) {
-	idtd[2] = (uint16_t) (((uint32_t) &idt >> 16) & 0xFFFF);
-	idtd[1] = (uint16_t) ((uint32_t) &idt & 0xFFFF);
+void idt_load(void)
+{
+	idtd[2] = (uint16_t) (((uint32_t) idt >> 16) & 0xFFFF);
+	idtd[1] = (uint16_t) ((uint32_t) idt & 0xFFFF);
 	idtd[0] = (uint16_t) sizeof(idt);
 
-	asm volatile("lidt [%0]" : : "r" (&idtd));
+	asm volatile("lidt [%0]" : : "r" (idtd));
 	asm("sti");
 }

@@ -39,7 +39,8 @@
  * 	IRQ14-15: 	IDE Bus
 */
 
-void pic_init(void) {
+void pic_init(void)
+{
 	/* ICW1 */
 	outb(MASTER_COMMAND_PORT, 0x11); 		// start initialization sequence
 	outb(SLAVE_COMMAND_PORT, 0x11);
@@ -60,12 +61,14 @@ void pic_init(void) {
 }
 
 /* PIC Mask: Disables all interrupts whose bits are set to 1. */
-void pic_set_mask(uint16_t mask) {
+void pic_set_mask(uint16_t mask)
+{
 	outb(MASTER_DATA_PORT, (mask & 0xFF));
 	outb(SLAVE_DATA_PORT, ((mask >> 8) & 0xFF));
 }
 
-void pic_send_eoi(uint8_t irq) {
+void pic_send_eoi(uint8_t irq)
+{
 	// it's only necessary to send an eoi to the slave if the IRQ came from it
 	if(irq >= 8)
 		outb(SLAVE_COMMAND_PORT, EOI_CODE);

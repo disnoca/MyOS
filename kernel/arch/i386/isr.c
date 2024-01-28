@@ -5,7 +5,7 @@
  * through a common function, uniformising them before redirecting them here.
  * 
  * Refer to:
- * AMD64 Architecture Programmer's Manual Volume 2: System Programming Section 8
+ * Intel Software Developer Manual, Volume 3-A: Chapter 6.3: Sources of Interrupts
  * 
  * @author Samuel Pires
 */
@@ -24,7 +24,8 @@ struct isr_frame {
 };
 
 
-void isr_handler(struct isr_frame isr_frame) {
+void isr_handler(struct isr_frame isr_frame)
+{
 	switch(isr_frame.vector_id) {
 		case(0): break;
 		case(1): break;

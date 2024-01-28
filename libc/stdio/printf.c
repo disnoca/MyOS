@@ -11,7 +11,7 @@ static bool printint(int val, signed char base, bool sign) {
 	unsigned uval = (unsigned) val;
 
 	int i = 0;
-	if(sign) {
+	if(sign && (val & 0x80000000)) {
 		do {
 			buf[i++] = numerals[abs(val) % base];
 		} while((val /= base) != 0);

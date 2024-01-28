@@ -2,7 +2,7 @@
  * Code for setting up the Global Descriptor Table.
  * 
  * Refer to:
- * AMD64 Architecture Programmer's Manual Volume 2: System Programming Section 4
+ * Intel Software Developer Manual, Volume 3-A: Chapter 3.4.5: Segment Descriptors
  * https://wiki.osdev.org/Global_Descriptor_Table
  * https://wiki.osdev.org/GDT_Tutorial
  * 
@@ -101,13 +101,13 @@ struct gdt {
 static struct tss tss;
 static struct gdt gdt;
 
-/* Legacy Segment Descriptor structure:
-*	bits 63-56: Base Address [31:24]
-*	bits 55-52: Flags (G, D/B, L, AVL)
-*	bits 51-48: Segment Limit [19:16]
-*	bits 47-40: Access Byte (P, DPL(3), S, E, D/C, R/W, A)
-*	bits 39-16: Base Address [23:0]
-*	bits 15-0:  Segment Limit [15:0]
+/* Segment Descriptor structure:
+*	bits 63:56 - Base Address [31:24]
+*	bits 55:52 - Flags (G, D/B, L, AVL)
+*	bits 51:48 - Segment Limit [19:16]
+*	bits 47:40 - Access Byte (P, DPL(3), S, E, D/C, R/W, A)
+*	bits 39:16 - Base Address [23:0]
+*	bits 15:0  - Segment Limit [15:0]
 */
 
 /**
@@ -119,7 +119,8 @@ static struct gdt gdt;
  * 	@param access_byte 	the Segment Descriptor's access byte
  * 	@param flags 		the Segment Descriptor's flags
 */
-static void encode_segment_descriptor(uint8_t entry[8], uint32_t base, uint32_t limit, uint8_t access_byte, uint8_t flags) {
+static void encode_segment_descriptor(uint8_t entry[8], uint32_t base, uint32_t limit, uint8_t access_byte, uint8_t flags)
+{
 	// only 20 bits and 4 bits in the limit and flags, respectively, are used.
 
 	// encode the base
@@ -137,7 +138,8 @@ static void encode_segment_descriptor(uint8_t entry[8], uint32_t base, uint32_t 
 	entry[5] = (uint8_t) access_byte;
 }
 
-void gdt_init(void) {
+void gdt_init(void)
+{
 	encode_segment_descriptor(gdt.null_descriptor, 0x0, 0x0, 0x0, 0x0);
 	encode_segment_descriptor(gdt.kernel_mode_code_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_segment_descriptor(gdt.kernel_mode_data_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, KERNEL_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
@@ -147,12 +149,13 @@ void gdt_init(void) {
 }
 
 /* Global Descriptor Table Pseudo-Descriptor 
- *  bits 36-16: the Global Descriptor Table's base address
- *  bits 15-0:  the Global Descriptor Table's size
+ *  bits 36:16 - the Global Descriptor Table's base address
+ *  bits 15:0 -  the Global Descriptor Table's size
 */
 static uint16_t gdtd[3];
 
-void gdt_load(void) {
+void gdt_load(void)
+{
 	gdtd[2] = (uint16_t) (((uint32_t) &gdt >> 16) & 0xFFFF);
 	gdtd[1] = (uint16_t) ((uint32_t) &gdt & 0xFFFF);
 	gdtd[0] = (uint16_t) sizeof(struct gdt);
