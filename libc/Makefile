@@ -1,7 +1,3 @@
-CFLAGS?=-masm=intel -O2 -g -ffreestanding -Wall -Wextra
-AS?=-masm=intel -f elf
-CPPFLAGS?=
-LDFLAGS?=
 LIBS?=-nostdlib -lk -lgcc
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 
