@@ -5,9 +5,11 @@
 ; 
 ; @author Samuel Pires
 
+MULTIBOOT_PAGE_ALIGN   equ 1<<0
+MULTIBOOT_MEMORY_INFO  equ 1<<1
 
 ; Declare constants for the multiboot header.
-FLAGS 	 equ	0x0
+FLAGS 	 equ	MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO
 MAGIC 	 equ 	0x1BADB002
 CHECKSUM equ	-(MAGIC + FLAGS)
 
@@ -46,6 +48,8 @@ extern _kernel_data_start_physical
 global _start
 
 _start:
+	mov esp, ebx 						; save the multiboot info struct
+
 	; Map the first 4MB of memory to the page table
 	mov eax, boot_page_table1
 	sub eax, _kernel_offset
@@ -98,10 +102,15 @@ _higher_half_start:
 	mov dword [boot_page_directory], 0	; unmap identity mapping
 	invlpg [0]							; invalidate identity mapping from tlb
 
+	mov ebx, esp						; restore the multiboot info struct
+	add ebx, _kernel_offset
+
 	mov esp, kernel_stack_top
+	mov ebp, esp
 
 	call _init							; call the global constructors.
 
+	push ebx							; pass the multiboot info struct to kmain
 	call kmain
 
 .loop:

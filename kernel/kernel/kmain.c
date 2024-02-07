@@ -3,10 +3,13 @@
 #include <kernel/segmentation.h>
 #include <kernel/pic.h>
 #include <kernel/idt.h>
+#include <kernel/memory.h>
+#include "../boot/multiboot.h"
+#include "../drivers/serial/serial.h"
 
 #include <stdio.h>
 
-int kmain()
+int kmain(multiboot_info_t* mbi)
 {
 	tty_init();
 	printf("Initialized TTY\n");
