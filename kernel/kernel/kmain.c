@@ -11,6 +11,9 @@ int kmain()
 	tty_init();
 	printf("Initialized TTY\n");
 
+	serial_init();
+	printf("Initialized Serial\n");
+
 	gdt_init();
 	gdt_load();
 	load_kernel_segments();
