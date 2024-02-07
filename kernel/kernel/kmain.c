@@ -3,7 +3,6 @@
 #include <kernel/segmentation.h>
 #include <kernel/pic.h>
 #include <kernel/idt.h>
-#include <kernel/paging.h>
 
 #include <stdio.h>
 
@@ -23,9 +22,6 @@ int kmain()
 	idt_init();
 	idt_load();
 	printf("Loaded IDT\n");
-
-	paging_enable();
-	printf("Enabled Paging\n");
 
 	printf("Finished Loading\n");
 

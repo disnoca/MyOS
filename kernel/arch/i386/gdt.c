@@ -160,6 +160,6 @@ void gdt_load(void)
 	gdtd[1] = (uint16_t) ((uint32_t) &gdt & 0xFFFF);
 	gdtd[0] = (uint16_t) sizeof(struct gdt);
 
-	asm volatile("lgdt [%0]" : : "r" (&gdtd));
+	asm volatile("lgdt [%0]" : : "r" (gdtd));
 }
 
