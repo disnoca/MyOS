@@ -18,7 +18,7 @@
 #include <kernel/memory.h>
 
 /* Framebuffer memory-mapped I/O location */
-#define FB_MMIO_LOCATION        (0xB8000 + KERNEL_OFFSET)
+#define FB_MMIO_LOCATION (0xB8000 + KERNEL_OFFSET)
 
 static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
 												// fb[i*2 + 1]:
@@ -158,6 +158,9 @@ void fb_clear(void)
 {
 	for(unsigned i = 0; i < FB_CELL_COUNT; i++)
 		fb_write_cell(i, 0, BLACK, WHITE);
+
+	cursor_move(0);
+	cursor_pos = 0;
 }
 
 void fb_write(const char* data, size_t size)

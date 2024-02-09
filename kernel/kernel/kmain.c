@@ -4,6 +4,7 @@
 #include <kernel/pic.h>
 #include <kernel/idt.h>
 #include <kernel/memory.h>
+#include <kernel/system.h>
 #include "../boot/multiboot.h"
 #include "../drivers/serial/serial.h"
 
