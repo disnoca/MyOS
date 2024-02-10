@@ -4,22 +4,32 @@
 #include <kernel/pic.h>
 #include <kernel/idt.h>
 #include <kernel/memory.h>
+#include <kernel/multiboot.h>
 #include <kernel/system.h>
-#include "../boot/multiboot.h"
+#include "../drivers/vga/vga.h"
 #include "../drivers/serial/serial.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
-int kmain(multiboot_info_t* mbi)
+int kmain(multiboot_info_t* mbd, uint32_t magic)
 {
-	tty_init();
-	printf("Initialized TTY\n");
-
+	vga_init();
 	serial_init();
-	printf("Initialized Serial\n");
+
+	if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
+		PANIC("Invalid magic number");
+	}
+
+	/* Check if there's a valid memory map */
+    if(!(mbd->flags & MULTIBOOT_INFO_MEM_MAP)) {
+        PANIC("Invalid memory map given by GRUB bootloader");
+	}
+
+	memory_detect(mbd);
+	printf("Detected Memory\n");
 
 	gdt_init();
-	gdt_load();
 	load_kernel_segments();
 	printf("Loaded GDT\n");
 
@@ -27,7 +37,6 @@ int kmain(multiboot_info_t* mbi)
 	printf("Initialized PIC\n");
 
 	idt_init();
-	idt_load();
 	printf("Loaded IDT\n");
 
 	printf("Finished Loading\n");

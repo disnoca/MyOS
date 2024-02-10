@@ -48,7 +48,12 @@ extern _kernel_data_start_physical
 global _start
 
 _start:
-	mov esp, ebx 						; save the multiboot info struct
+	; Save the multiboot magic number and info struct
+	mov esp, kernel_stack_top
+	sub esp, _kernel_offset
+	add ebx, _kernel_offset
+	mov [esp - 4], eax
+	mov [esp - 8], ebx
 
 	; Map the first 4MB of memory to the page table
 	mov eax, boot_page_table1
@@ -102,15 +107,12 @@ _higher_half_start:
 	mov dword [boot_page_directory], 0	; unmap identity mapping
 	invlpg [0]							; invalidate identity mapping from tlb
 
-	mov ebx, esp						; restore the multiboot info struct
-	add ebx, _kernel_offset
-
 	mov esp, kernel_stack_top
 	mov ebp, esp
+	sub esp, 8							; mind the saved multiboot magic number and info struct
 
 	call _init							; call the global constructors.
 
-	push ebx							; pass the multiboot info struct to kmain
 	call kmain
 
 .loop:

@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define vga_clear() 			fb_clear()
+#define vga_write(data, size) 	fb_write(data, size)
+#define vga_writestring(str) 	fb_writestring(str)
+#define vga_writechar(c) 		fb_writechar(c)
+
 /**
  * 	Clears the framebuffer and configures and enables the cursor.
 */
@@ -37,7 +42,7 @@ void fb_write(const char* data, size_t size);
  * 
  *  @param str the string to be written
 */
-void fb_writestring(const char* data);
+void fb_writestring(const char* str);
 
 /**
  * 	Writes the given character to the framebuffer.

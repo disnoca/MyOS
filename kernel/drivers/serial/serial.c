@@ -11,7 +11,6 @@
 
 #include "serial.h"
 #include "../../arch/i386/io.h"
-#include <stddef.h>
 #include <stdint.h>
 
 /* The I/O ports */
@@ -100,7 +99,7 @@ static void serial_configure_baud_rate(uint16_t com, uint16_t divisor)
 /* The serial ports are only going to be used for debugging, therefore,
  * since it won't be handling any received data, interrupts will be disabled.
 */
-int serial_init()
+bool serial_init()
 {
 	uint16_t com = SERIAL_COM1_BASE;
 
@@ -113,11 +112,11 @@ int serial_init()
  
 	// Check if serial is faulty (i.e: not same byte as sent)
 	if(inb(SERIAL_DATA_PORT(com)) != 0xAE)
-	   return 1;
+	   return false;
 
 	// If serial is not faulty, disable looback mode
 	outb(SERIAL_MODEM_COMMAND_PORT(com), 0x03);
-	return 0;
+	return true;
 }
 
 /**
@@ -133,12 +132,24 @@ static int serial_transmit_fifo_empty(unsigned int com)
 	return inb(SERIAL_LINE_STATUS_PORT(com)) & 0x20;
 }
 
-void serial_write(char* buf)
+void serial_write(const char* data, size_t size)
+{
+	for(size_t i = 0; i < size; i++)
+		serial_writechar(data[i]);
+}
+
+
+void serial_writestring(const char* str)
+{
+	for(size_t i = 0; str[i] != '\0'; i++)
+		serial_writechar(str[i]);
+}
+
+
+void serial_writechar(char c)
 {
 	uint16_t com = SERIAL_COM1_BASE;
 
-	for(int i = 0; buf[i] != '\0'; i++) {
-		while(!serial_transmit_fifo_empty(com));
-		outb(com, buf[i]);
-	}
+	while(!serial_transmit_fifo_empty(com)) {}
+	outb(com, c);
 }

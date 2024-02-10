@@ -138,6 +138,12 @@ static void encode_segment_descriptor(uint8_t entry[8], uint32_t base, uint32_t 
 	entry[5] = (uint8_t) access_byte;
 }
 
+/* Global Descriptor Table Pseudo-Descriptor 
+ *  bits 36:16 - the Global Descriptor Table's base address
+ *  bits 15:0 -  the Global Descriptor Table's size
+*/
+static uint16_t gdtd[3];
+
 void gdt_init(void)
 {
 	encode_segment_descriptor(gdt.null_descriptor, 0x0, 0x0, 0x0, 0x0);
@@ -146,16 +152,7 @@ void gdt_init(void)
 	encode_segment_descriptor(gdt.user_mode_code_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, USER_MODE_CODE_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_segment_descriptor(gdt.user_mode_data_segment, FLAT_MODEL_BASE, FLAT_MODEL_LIMIT, USER_MODE_DATA_SEGMENT_ACCESS_BYTE, LEGACY_MODE_SEGMENT_FLAGS);
 	encode_segment_descriptor(gdt.task_state_segment, (uint32_t) &tss, sizeof(struct tss), TASK_STATE_SEGMENT_ACCESS_BYTE, 0x0);
-}
 
-/* Global Descriptor Table Pseudo-Descriptor 
- *  bits 36:16 - the Global Descriptor Table's base address
- *  bits 15:0 -  the Global Descriptor Table's size
-*/
-static uint16_t gdtd[3];
-
-void gdt_load(void)
-{
 	gdtd[2] = (uint16_t) (((uint32_t) &gdt >> 16) & 0xFFFF);
 	gdtd[1] = (uint16_t) ((uint32_t) &gdt & 0xFFFF);
 	gdtd[0] = (uint16_t) sizeof(struct gdt);

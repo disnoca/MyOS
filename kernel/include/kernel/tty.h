@@ -4,11 +4,6 @@
 #include <stddef.h>
 
 /**
- *	Initializes the TTY.
-*/
-void tty_init(void);
-
-/**
  *	Writes a charaacter to the TTY.
 */
 void tty_putchar(char c);

@@ -1,22 +1,37 @@
 #ifndef _KERNEL_SERIAL_H
 #define _KERNEL_SERIAL_H
 
-#define LOG_ERROR 	0
-#define LOG_WARNING 1
-#define LOG_INFO 	2
+#include <stddef.h>
+#include <stdbool.h>
+
 
 /**
  *  Initializes the serial ports.
  * 
- *  @return 0 if all serial ports are working correctly or 1 if a serial port is faulty
+ *  @return true if all serial ports are working correctly or false if a serial port is faulty
 */
-int serial_init();
+bool serial_init();
 
 /**
- *  Writes a string to the serial port.
+ *  Writes size bytes from the given data to the serial port.
  * 
- *  @param buf the string to be written
+ *  @param data the data to be written
+ * 	@param size the size of the data
 */
-void serial_write(char* buf);
+void serial_write(const char* data, size_t size);
+
+/**
+ *  Writes a null terminated string to the serial port.
+ * 
+ *  @param str the string to be written
+*/
+void serial_writestring(const char* str);
+
+/**
+ * 	Writes the given character to the serial port.
+ * 
+ * 	@param c the char to be written
+*/
+void serial_writechar(char c);
 
 #endif

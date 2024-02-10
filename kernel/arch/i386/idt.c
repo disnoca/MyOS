@@ -61,6 +61,12 @@ static void encode_igd(unsigned int vector_id, uint32_t handler, uint8_t flags, 
 	idt[vector_id].flags_and_type = (uint8_t) ((flags << 4) | (type & 0x0F));
 }
 
+/* Interrupt Descriptor Table Pseudo-Descriptor 
+ *  bits 36:16 - the Interrupt Descriptor Table's base address
+ *  bits 15:0  - the Interrupt Descriptor Table's size
+*/
+static uint16_t idtd[3];
+
 void idt_init(void)
 {
 	encode_igd(0, (uint32_t) interrupt_handler_0, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
@@ -112,17 +118,7 @@ void idt_init(void)
 	encode_igd(45, (uint32_t) interrupt_handler_45, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 	encode_igd(46, (uint32_t) interrupt_handler_46, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
 	encode_igd(47, (uint32_t) interrupt_handler_47, HARDWARE_INTERRUPT_FLAGS, BIT32_INTERRUPT_GATE);
-}
 
-
-/* Interrupt Descriptor Table Pseudo-Descriptor 
- *  bits 36:16 - the Interrupt Descriptor Table's base address
- *  bits 15:0  - the Interrupt Descriptor Table's size
-*/
-static uint16_t idtd[3];
-
-void idt_load(void)
-{
 	idtd[2] = (uint16_t) (((uint32_t) idt >> 16) & 0xFFFF);
 	idtd[1] = (uint16_t) ((uint32_t) idt & 0xFFFF);
 	idtd[0] = (uint16_t) sizeof(idt);

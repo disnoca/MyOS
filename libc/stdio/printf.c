@@ -20,7 +20,7 @@ static bool printint(int val, signed char base, bool sign) {
 	else
 		do {
 			buf[i++] = numerals[uval % base];
-		} while((uval /= base) != 0);		
+		} while((uval /= base) != 0);
 
 	if(base == 16) {
 		buf[i++] = 'x';
