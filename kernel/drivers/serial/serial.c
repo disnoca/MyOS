@@ -11,6 +11,7 @@
 
 #include "serial.h"
 #include "../../arch/i386/io.h"
+
 #include <stdint.h>
 
 /* The I/O ports */

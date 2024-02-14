@@ -24,6 +24,9 @@ dd CHECKSUM
 
 ; Allocate the initial stack.
 section .bootstrap_stack write nobits
+global boot_page_directory
+global emergency_page_table
+
 align 16
 kernel_stack_bottom:
 	resb 16384
@@ -35,9 +38,14 @@ section .bss
 align 4096
 boot_page_directory:
 	resb 4096
-boot_page_table1:
-	resb 4096	
+boot_page_table1:	; Allocate more tables if kernel exceeds 3MB
+	resb 4096
 
+; If at any point there is less that 4KB of free paged space, there is no space to
+; allocate a new page table and therefore no way to allocate more memory.
+; This page table is used to remedy this situation.
+emergency_page_table:
+	resb 4096
 
 ; The kernel entry point.
 section .multiboot.text exec
@@ -55,9 +63,23 @@ _start:
 	mov [esp - 4], eax
 	mov [esp - 8], ebx
 
-	; Map the first 4MB of memory to the page table
 	mov eax, boot_page_table1
 	sub eax, _kernel_offset
+	sub eax, 4
+	mov ebx, boot_page_directory
+	sub ebx, _kernel_offset
+	sub ebx, 4
+	mov ecx, 1024
+
+; Initialize the page directory and table with 0s
+.zero:
+	mov dword [eax + ecx * 4], 0
+	mov dword [ebx + ecx * 4], 0
+	loop .zero
+
+; Map the first 4MB of memory to the page table
+.loop.start:
+	add eax, 4
 	mov ebx, 0
 	mov ecx, 1024
 	mov edi, 0x1
@@ -79,6 +101,13 @@ _start:
 	loop .loop
 
 .end:
+	; Calculate page directory entry index for kernel offset
+	mov eax, _kernel_offset
+	mov edx, 0
+	mov ebx, 4194304					; divide by the addressable range of a page table
+	div ebx
+	mov ecx, eax
+
 	; Map the page table to both virtual addresses 0x00000000 and _kernel_offset
 	mov eax, boot_page_directory
 	sub eax, _kernel_offset
@@ -86,7 +115,7 @@ _start:
 	sub ebx, _kernel_offset
 	or ebx, 0x3
 	mov [eax], ebx
-	mov [eax + 768 * 4], ebx
+	mov [eax + ecx * 4], ebx
 
 	mov cr3, eax						; load page directory
 	mov eax, cr4
@@ -105,7 +134,8 @@ extern kmain
 
 _higher_half_start:
 	mov dword [boot_page_directory], 0	; unmap identity mapping
-	invlpg [0]							; invalidate identity mapping from tlb
+	mov eax, cr3						; invalidate tlb
+	mov cr3, eax
 
 	mov esp, kernel_stack_top
 	mov ebp, esp

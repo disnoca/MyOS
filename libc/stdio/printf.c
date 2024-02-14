@@ -8,7 +8,7 @@
 static bool printint(int val, signed char base, bool sign) {
 	char numerals[] = "0123456789ABCDEF";
 	char buf[32*8];
-	unsigned uval = (unsigned) val;
+	unsigned int uval = (unsigned) val;
 
 	int i = 0;
 	if(sign && (val & 0x80000000)) {

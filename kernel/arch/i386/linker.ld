@@ -42,9 +42,7 @@ SECTIONS
 		_kernel_data_start_physical = . - _kernel_offset;
 		*(.data)
 	}
-
-	/* Read-write data (uninitialized) and stack */
-	.bss BLOCK(4K) : ALIGN(4K)
+	.bss ALIGN (4K) : AT (ADDR (.bss) - _kernel_offset)
 	{
 		*(COMMON)
 		*(.bss)
