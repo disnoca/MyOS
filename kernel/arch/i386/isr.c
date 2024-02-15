@@ -11,8 +11,8 @@
 */
 
 #include <stdint.h>
-#include <kernel/pic.h>
-#include "../../drivers/keyboard/keyboard.h"
+#include <kernel/arch/i386/pic.h>
+#include <kernel/arch/i386/keyboard.h>
 
 #define PIC_OFFSET 32
 
@@ -61,7 +61,7 @@ void isr_handler(struct isr_frame isr_frame)
 		case(31): break;
 
 		case(32): pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;
-		case(33): read_input_from_keyboard(); pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;
+		case(33): keyboard_read_input(); pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;
 		case(34): pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;
 		case(35): pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;
 		case(36): pic_send_eoi(isr_frame.vector_id - PIC_OFFSET); break;

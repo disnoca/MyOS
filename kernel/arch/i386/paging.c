@@ -1,4 +1,4 @@
-#include <kernel/paging.h>
+#include <kernel/arch/i386/paging.h>
 
 
 void page_directory_set_page(uint32_t* pd, unsigned long paddr, unsigned long vaddr, uint16_t flags)

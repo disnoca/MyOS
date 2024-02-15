@@ -1,5 +1,4 @@
-#ifndef _KERNEL_MEMORY_H
-#define _KERNEL_MEMORY_H
+#pragma once
 
 #include <kernel/multiboot.h>
 #include <stdint.h>
@@ -38,6 +37,3 @@ size_t mblocks_alloc(unsigned long* addrs, size_t count);
  * @param count the number of blocks to free
 */
 void mblocks_free(const unsigned long* addrs, size_t count);
-
-
-#endif

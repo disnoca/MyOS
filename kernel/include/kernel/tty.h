@@ -1,5 +1,4 @@
-#ifndef _KERNEL_TTY_H
-#define _KERNEL_TTY_H
+#pragma once
 
 #include <stddef.h>
 
@@ -17,5 +16,3 @@ void tty_write(const char* data, size_t size);
  *	Write the given string to the TTY.
 */
 void tty_writestring(const char* data);
-
-#endif

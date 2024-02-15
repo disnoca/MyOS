@@ -9,10 +9,9 @@
  * @author Samuel Pires
 */
 
-#include <kernel/gdt.h>
 #include <stdint.h>
 
-#define FLAT_MODEL_BASE 							0x0
+#define FLAT_MODEL_BASE 						0x0
 #define FLAT_MODEL_LIMIT 						0xFFFFF
 
 #define KERNEL_MODE_CODE_SEGMENT_ACCESS_BYTE 	0x9A
@@ -22,6 +21,10 @@
 #define TASK_STATE_SEGMENT_ACCESS_BYTE 			0x89
 
 #define LEGACY_MODE_SEGMENT_FLAGS     			0xC
+
+
+extern void load_kernel_segments(void);
+
 
 /* Task State Segment */
 struct tss {
@@ -158,5 +161,7 @@ void gdt_init(void)
 	gdtd[0] = (uint16_t) sizeof(struct gdt);
 
 	asm volatile("lgdt [%0]" : : "r" (gdtd));
+	
+	load_kernel_segments();
 }
 

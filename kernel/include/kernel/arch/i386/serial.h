@@ -1,5 +1,4 @@
-#ifndef _KERNEL_SERIAL_H
-#define _KERNEL_SERIAL_H
+#pragma once
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -33,5 +32,3 @@ void serial_writestring(const char* str);
  * 	@param c the char to be written
 */
 void serial_writechar(char c);
-
-#endif

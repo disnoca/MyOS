@@ -1,7 +1,7 @@
-#include <kernel/memory.h>
 #include <kernel/utils.h>
-#include <kernel/system.h>
-#include <kernel/paging.h>
+#include <kernel/arch/i386/memory.h>
+#include <kernel/arch/i386/system.h>
+#include <kernel/arch/i386/paging.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

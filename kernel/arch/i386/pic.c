@@ -8,8 +8,8 @@
  * @author Samuel Pires
 */
 
-#include <kernel/pic.h>
-#include "io.h"
+#include <kernel/arch/i386/pic.h>
+#include <kernel/arch/i386/io.h>
 
 #define MASTER_PORT			0x20
 #define SLAVE_PORT			0xA0

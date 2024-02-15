@@ -1,6 +1,9 @@
 #include <kernel/tty.h>
-#include "../drivers/vga/vga.h"
-#include "../drivers/serial/serial.h"
+
+#ifdef __i386__
+#include <kernel/arch/i386/vga.h>
+#include <kernel/arch/i386/serial.h>
+#endif
 
 void tty_putchar(char c)
 {

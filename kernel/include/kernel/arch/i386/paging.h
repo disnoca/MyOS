@@ -1,5 +1,4 @@
-#ifndef _KERNEL_PAGING_H
-#define _KERNEL_PAGING_H
+#define pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -97,5 +96,3 @@ void page_directory_remove_page(uint32_t* pd, unsigned long addr);
 static inline void tlb_invalidate_page(unsigned long addr) {
 	asm volatile("invlpg [%0]" :: "r" (addr));
 }
-
-#endif

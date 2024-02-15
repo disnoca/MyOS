@@ -9,8 +9,8 @@
  * @author Samuel Pires
 */
 
-#include "serial.h"
-#include "../../arch/i386/io.h"
+#include <kernel/arch/i386/serial.h>
+#include <kernel/arch/i386/io.h>
 
 #include <stdint.h>
 
