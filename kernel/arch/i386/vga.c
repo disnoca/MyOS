@@ -12,13 +12,13 @@
 
 #include <kernel/arch/i386/vga.h>
 #include <kernel/arch/i386/io.h>
-#include <kernel/arch/i386/memory.h>
+#include <kernel/arch/i386/mm.h>
 
 #include <stdint.h>
 #include <stddef.h>
 
 /* Framebuffer memory-mapped I/O location */
-#define FB_MMIO_LOCATION (0xB8000 + KERNEL_OFFSET)
+#define FB_MMIO_LOCATION	P2V(0xB8000)
 
 static char* fb = (char*) FB_MMIO_LOCATION;  	// fb[i*2]:       Code Point
 												// fb[i*2 + 1]:

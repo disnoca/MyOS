@@ -22,11 +22,6 @@ static bool printint(int val, signed char base, bool sign) {
 			buf[i++] = numerals[uval % base];
 		} while((uval /= base) != 0);
 
-	if(base == 16) {
-		buf[i++] = 'x';
-		buf[i++] = '0';
-	}
-
 	while(--i >= 0)
 		putchar(buf[i]);
 

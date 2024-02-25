@@ -24,8 +24,8 @@ dd CHECKSUM
 
 ; Allocate the initial stack.
 section .bootstrap_stack write nobits
-global boot_page_directory
-global emergency_page_table
+global kernel_page_directory
+global kernel_page_tables
 
 align 16
 kernel_stack_bottom:
@@ -33,19 +33,14 @@ kernel_stack_bottom:
 kernel_stack_top:
 
 
-; Preallocate pages used for paging.
+; Preallocate page directories and tables.
 section .bss
 align 4096
-boot_page_directory:
+kernel_page_directory:
 	resb 4096
-boot_page_table1:	; Allocate more tables if kernel exceeds 3MB
-	resb 4096
+kernel_page_tables:
+	resb 1048576						; 256 * 4KB page tables to hold 1GB of memory
 
-; If at any point there is less that 4KB of free paged space, there is no space to
-; allocate a new page table and therefore no way to allocate more memory.
-; This page table is used to remedy this situation.
-emergency_page_table:
-	resb 4096
 
 ; The kernel entry point.
 section .multiboot.text exec
@@ -55,6 +50,9 @@ extern _kernel_end_physical
 extern _kernel_data_start_physical
 global _start
 
+PAGE_TABLE_SIZE  equ 4096
+PAGE_TABLE_RANGE equ 4194304
+
 _start:
 	; Save the multiboot magic number and info struct
 	mov esp, kernel_stack_top
@@ -63,60 +61,78 @@ _start:
 	mov [esp - 4], eax
 	mov [esp - 8], ebx
 
-	mov eax, boot_page_table1
+	mov eax, kernel_page_tables
 	sub eax, _kernel_offset
-	sub eax, 4
-	mov ebx, boot_page_directory
-	sub ebx, _kernel_offset
-	sub ebx, 4
-	mov ecx, 1024
-
-; Initialize the page directory and table with 0s
-.zero:
-	mov dword [eax + ecx * 4], 0
-	mov dword [ebx + ecx * 4], 0
-	loop .zero
-
-; Map the first 4MB of memory to the page table
-.loop.start:
-	add eax, 4
 	mov ebx, 0
-	mov ecx, 1024
+	mov ecx, 229376						; 224 * 1024 entries
 	mov edi, 0x1
 	mov esi, 0x3
-	mov ebp, esi
+	mov ebp, esi						; mark first MB as writable
 
-.loop:
-	cmp ebx, _kernel_end_physical		; only map until the end of the kernel
-	jae .end
+; Map the first 896MB to the first 224 page tables
+.loop.pt:
 	cmp ebx, _kernel_start_physical
-	cmovae ebp, edi						; mark kernel pages as present and non-writable
+	cmovae ebp, edi						; mark text and rodata as non-writable
 	cmp ebx, _kernel_data_start_physical
-	cmovae ebp, esi						; mark pages as writable starting from the data section
+	cmovae ebp, esi						; mark remaining memory as writable
 	mov edx, ebx
 	or edx, ebp
 	mov [eax], edx
 	add eax, 4
-	add ebx, 4096
-	loop .loop
+	add ebx, PAGE_TABLE_SIZE
+	loop .loop.pt
 
-.end:
-	; Calculate page directory entry index for kernel offset
-	mov eax, _kernel_offset
-	mov edx, 0
-	mov ebx, 4194304					; divide by the addressable range of a page table
-	div ebx
-	mov ecx, eax
+.loop.pt.zero.start:
+	mov ecx, 32768						; 32 * 1024 entries
 
-	; Map the page table to both virtual addresses 0x00000000 and _kernel_offset
-	mov eax, boot_page_directory
+; Zero the remaining page tables
+.loop.pt.zero:
+	mov dword [eax], 0
+	add eax, 4
+	loop .loop.pt.zero
+
+; Identity map the kernel in the page directory
+.loop.pd.id.start:
+	mov eax, kernel_page_directory
 	sub eax, _kernel_offset
-	mov ebx, boot_page_table1
+	mov ebx, kernel_page_tables
+	sub ebx, _kernel_offset
+	mov ecx, 0
+
+.loop.pd.id:
+	mov edx, ebx
+	or edx, 0x3
+	mov [eax], edx
+	add eax, 4
+	add ebx, PAGE_TABLE_SIZE
+	add ecx, PAGE_TABLE_RANGE
+	cmp ecx, _kernel_end_physical
+	jb .loop.pd.id
+
+; Zero the entries between identity and virtual kernel
+.loop.pd.zero:
+	mov dword [eax], 0
+	add eax, 4
+	add ecx, PAGE_TABLE_RANGE
+	cmp ecx, _kernel_offset
+	jb .loop.pd.zero
+
+; Map high memory
+.loop.pd.hm.start:
+	mov ebx, kernel_page_tables
 	sub ebx, _kernel_offset
 	or ebx, 0x3
-	mov [eax], ebx
-	mov [eax + ecx * 4], ebx
+	mov ecx, 256						; add all 256 page tables to page directory
 
+.loop.pd.hm:
+	mov [eax], ebx
+	add eax, 4
+	add ebx, PAGE_TABLE_SIZE
+	loop .loop.pd.hm
+
+.end:
+	mov eax, kernel_page_directory
+	sub eax, _kernel_offset
 	mov cr3, eax						; load page directory
 	mov eax, cr4
 	or eax, 0x00000090					; enable 4MB pages and global-page support
@@ -124,19 +140,31 @@ _start:
 	mov eax, cr0
 	or eax, 0x80010000					; enable paging and write protect
 	mov cr0, eax
-	lea eax, [_higher_half_start]
-	jmp eax								; jump to the higher half with an absolute jump
+	lea eax, [_high_memory_start]
+	jmp eax								; jump to high memory with an absolute jump
 
 
 section .text
 extern _init
 extern kmain
 
-_higher_half_start:
-	mov dword [boot_page_directory], 0	; unmap identity mapping
-	mov eax, cr3						; invalidate tlb
+_high_memory_start:
+	mov eax, kernel_page_directory
+	mov ecx, 0
+
+; Unmap identity mapping
+.unmap:
+	mov dword [eax], 0
+	add eax, 4
+	add ecx, PAGE_TABLE_RANGE
+	cmp ecx, _kernel_end_physical
+	jb .unmap
+
+	; Invalidate TLB
+	mov eax, cr3
 	mov cr3, eax
 
+.start:
 	mov esp, kernel_stack_top
 	mov ebp, esp
 	sub esp, 8							; mind the saved multiboot magic number and info struct

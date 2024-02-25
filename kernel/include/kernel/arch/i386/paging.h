@@ -1,33 +1,32 @@
-#define pragma once
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
 
-#define PAGE_SIZE							4096
+#define PAGE_SIZE				4096
 
-#define PAGE_DIRECTORY_ALIGNMENT			4096
-#define PAGE_TABLE_ALIGNMENT				4096
+#define PD_ALIGNMENT			4096
+#define PT_ALIGNMENT			4096
 
-#define PAGE_DIRECTORY_ENTRY_SIZE			4
-#define PAGE_DIRECTORY_NUM_ENTRIES			1024
-#define PAGE_DIRECTORY_SIZE					(PAGE_DIRECTORY_ENTRY_SIZE * PAGE_DIRECTORY_NUM_ENTRIES)
+#define PDE_SIZE				4
+#define PD_NUM_ENTRIES			1024
+#define PD_SIZE					(PDE_SIZE * PD_NUM_ENTRIES)
 
-#define PAGE_TABLE_ENTRY_SIZE				4
-#define PAGE_TABLE_NUM_ENTRIES 				1024
-#define PAGE_TABLE_SIZE 					(PAGE_TABLE_ENTRY_SIZE * PAGE_TABLE_NUM_ENTRIES)
-#define PAGE_TABLE_ADDRESSABLE_RANGE		(PAGE_TABLE_NUM_ENTRIES * PAGE_SIZE)
+#define PTE_SIZE				4
+#define PT_NUM_ENTRIES 			1024
+#define PT_SIZE 				(PTE_SIZE * PT_NUM_ENTRIES)
+#define PT_ADDRESSABLE_RANGE	(PT_NUM_ENTRIES * PAGE_SIZE)
 
-#define PAGE_TABLE_INDEX_TO_ADDR(i)			((i) * PAGE_TABLE_ADDRESSABLE_RANGE)
-#define ADDR_TO_PAGE_TABLE_INDEX(a)			((a) / PAGE_TABLE_ADDRESSABLE_RANGE)
+#define PDE_INDEX_TO_ADDR(i)	((i) * PT_ADDRESSABLE_RANGE)
+#define ADDR_TO_PDE_INDEX(a)	((a) / PT_ADDRESSABLE_RANGE)
 
-#define ADDR_TO_PAGE_TABLE_ENTRY_OFFSET(a)	(((a) % PAGE_TABLE_ADDRESSABLE_RANGE) / PAGE_SIZE)
+#define ADDR_TO_PTE_INDEX(a)	(((a) % PT_ADDRESSABLE_RANGE) / PAGE_SIZE)
 
-#define PAGE_DIRECTORY_ENTRY_ADDR(pde) 		((pde) & 0xFFFFF000)
+#define PDE_ADDR_FIELD(pde) 	((pde) & 0xFFFFF000)
+#define PTE_ADDR_FIELD(pte)		((unsigned long) (pte) & 0xFFFFF000)
 
-#define PAGE_TABLE_ENTRY_ADDR(pte)			((unsigned long) (pte) & 0xFFFFF000)
-
-#define PAGE_DIRECTORY_ENTRY_CREATE(a,f)	((a) | (f))
-#define PAGE_TABLE_ENTRY_CREATE(a,f)		((a) | (f))
+#define PDE(a,f)				((a) | (f))
+#define PTE(a,f)				((a) | (f))
 
 /**
  * Page Directory Entry structure:
@@ -68,25 +67,6 @@
 #define PAGE_DIRTY 			(1 << 6)
 #define PAGE_PAT			(1 << 7)	/* Page Attribute Table */
 #define PAGE_GLOBAL			(1 << 8)
-
-
-/**
- * Adds a page to the specified page directory, overwriting any previous entries
- * and allocating new page tables if necessary.
- * 
- * @param pd a pointer to the start of the page directory
- * @param paddr the physical address to map the page to
- * @param vaddr the virtual address to map the page from
-*/
-void page_directory_set_page(uint32_t* pd, unsigned long paddr, unsigned long vaddr, uint16_t flags);
-
-/**
- * Removes a page from the specified page directory, freeing the corresponding page table if it became empty.
- * 
- * @param pd a pointer to the start of the page directory
- * @param addr the virtual address of the page to be removed
-*/
-void page_directory_remove_page(uint32_t* pd, unsigned long addr);
 
 /**
  * Invalidates a page from the TLB.

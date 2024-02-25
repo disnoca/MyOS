@@ -2,7 +2,7 @@
 #include <kernel/arch/i386/system.h>
 #include <kernel/arch/i386/vga.h>
 #include <kernel/arch/i386/serial.h>
-#include <kernel/arch/i386/memory.h>
+#include <kernel/arch/i386/mm.h>
 #include <kernel/arch/i386/pic.h>
 
 #include <stdio.h>
@@ -13,7 +13,7 @@ extern void gdt_init(void);
 extern void idt_init(void);
 
 
-int kmain(multiboot_info_t* mbd, uint32_t magic)
+int kmain(multiboot_info_t* mbi, uint32_t magic)
 {
 	vga_init();
 	serial_init();
@@ -22,12 +22,7 @@ int kmain(multiboot_info_t* mbd, uint32_t magic)
 		PANIC("Invalid magic number");
 	}
 
-	/* Check if there's a valid memory map */
-    if(!(mbd->flags & MULTIBOOT_INFO_MEM_MAP)) {
-        PANIC("Invalid memory map given by GRUB bootloader");
-	}
-
-	memory_detect(mbd);
+	mm_init(mbi);
 	printf("Detected Memory\n");
 
 	gdt_init();
