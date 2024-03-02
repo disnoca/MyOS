@@ -135,7 +135,7 @@ void* bmap_alloc(size_t num_pages)
 	size_t contiguous_pages_found = 0;
 
 	for(size_t i = 0; i < bmap_arr_length; i++) {
-		if(bmap[i])	continue;	/* Ignore array entries with no free pages */
+		if(!(~bmap[i]))	continue;	/* Ignore array entries with no free pages */
 
 		bmap_array_elem_t arr_entry = bmap[i];
 		size_t search_mask = 1;
@@ -146,7 +146,7 @@ void* bmap_alloc(size_t num_pages)
 				contiguous_pages_found++;
 			else {
 				contiguous_pages_found = 0;
-				curr_entry = i * PAGES_PER_ARRAY_ENTRY + j;
+				curr_entry = i * PAGES_PER_ARRAY_ENTRY + j + 1;
 			}
 
 			if(contiguous_pages_found == num_pages) {
@@ -183,7 +183,7 @@ void bmap_free(void* page_addr, size_t num_pages)
 */
 void bmap_print(void)
 {
-	for(size_t i = 0; i < bmap_arr_length; i++)
+	for(size_t i = 0; i < 1; i++)
 		printf("0x%x ", bmap[i]);
 	printf("\n");
 }

@@ -48,10 +48,12 @@ extern _kernel_offset
 extern _kernel_start_physical
 extern _kernel_end_physical
 extern _kernel_data_start_physical
+extern low_mem_num_pages
 global _start
 
 PAGE_TABLE_SIZE  equ 4096
 PAGE_TABLE_RANGE equ 4194304
+PAGE_TABLE_ENTRIES_IN_1GB equ 262144
 
 _start:
 	; Save the multiboot magic number and info struct
@@ -61,15 +63,21 @@ _start:
 	mov [esp - 4], eax
 	mov [esp - 8], ebx
 
+	; Get and save number of low memory page table entries
+	mov eax, low_mem_num_pages
+	sub eax, _kernel_offset
+	mov eax, [eax]
+	mov [esp - 12], eax
+
 	mov eax, kernel_page_tables
 	sub eax, _kernel_offset
 	mov ebx, 0
-	mov ecx, 229376						; 224 * 1024 entries
+	mov ecx, [esp - 12]					; number of low memory page table entries
 	mov edi, 0x1
 	mov esi, 0x3
 	mov ebp, esi						; mark first MB as writable
 
-; Map the first 896MB to the first 224 page tables
+; Map the low memory page tables
 .loop.pt:
 	cmp ebx, _kernel_start_physical
 	cmovae ebp, edi						; mark text and rodata as non-writable
@@ -83,9 +91,10 @@ _start:
 	loop .loop.pt
 
 .loop.pt.zero.start:
-	mov ecx, 32768						; 32 * 1024 entries
+	mov ecx, PAGE_TABLE_ENTRIES_IN_1GB
+	sub ecx, [esp - 12]					; index of the first high memory page table entry
 
-; Zero the remaining page tables
+; Zero the remaining (high memory) page tables
 .loop.pt.zero:
 	mov dword [eax], 0
 	add eax, 4
@@ -117,18 +126,18 @@ _start:
 	cmp ecx, _kernel_offset
 	jb .loop.pd.zero
 
-; Map high memory
-.loop.pd.hm.start:
+; Map low memory
+.loop.pd.lm.start:
 	mov ebx, kernel_page_tables
 	sub ebx, _kernel_offset
 	or ebx, 0x3
 	mov ecx, 256						; add all 256 page tables to page directory
 
-.loop.pd.hm:
+.loop.pd.lm:
 	mov [eax], ebx
 	add eax, 4
 	add ebx, PAGE_TABLE_SIZE
-	loop .loop.pd.hm
+	loop .loop.pd.lm
 
 .end:
 	mov eax, kernel_page_directory
@@ -140,15 +149,15 @@ _start:
 	mov eax, cr0
 	or eax, 0x80010000					; enable paging and write protect
 	mov cr0, eax
-	lea eax, [_high_memory_start]
-	jmp eax								; jump to high memory with an absolute jump
+	lea eax, [_higher_half_start]
+	jmp eax								; jump to higher half with an absolute jump
 
 
 section .text
 extern _init
 extern kmain
 
-_high_memory_start:
+_higher_half_start:
 	mov eax, kernel_page_directory
 	mov ecx, 0
 

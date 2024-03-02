@@ -12,6 +12,8 @@
 extern void gdt_init(void);
 extern void idt_init(void);
 
+extern void bmap_print(void);
+
 
 int kmain(multiboot_info_t* mbi, uint32_t magic)
 {
@@ -24,6 +26,8 @@ int kmain(multiboot_info_t* mbi, uint32_t magic)
 
 	mm_init(mbi);
 	printf("Detected Memory\n");
+	printf("Initialized Page Allocator\n");
+	printf("Initialized Slab Allocator\n");
 
 	gdt_init();
 	printf("Loaded GDT\n");
