@@ -10,9 +10,10 @@
  * @author Samuel Pires
 */
 
+#include <kernel/mm/mm.h>
+
 #include <kernel/arch/i386/vga.h>
 #include <kernel/arch/i386/io.h>
-#include <kernel/arch/i386/mm.h>
 
 #include <stdint.h>
 #include <stddef.h>

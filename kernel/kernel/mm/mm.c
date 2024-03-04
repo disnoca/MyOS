@@ -1,18 +1,22 @@
+#include <kernel/mm/mm.h>
 #include <kernel/utils.h>
-#include <kernel/arch/i386/mm.h>
-#include <kernel/arch/i386/system.h>
+#include <kernel/system.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 
+#define MEM_MAP_MAX_LENGTH	((1 << 30) / (4 * (1 << 10)))	/* 1GB / 4KB page frames */
+
+
 extern char _kernel_end_physical;
 
 /* A variable must be defined for boot sequence */
-const unsigned long low_mem_num_pages = HIGH_MEM_PAGE_INDEX;
+const unsigned long low_mem_num_pages = HIGH_MEM_PFN;
 
 
-extern uintptr_t bmap_init(uintptr_t static_kernel_end, uintptr_t mem_end);
+extern uintptr_t bmap_init(uintptr_t mem_start, uintptr_t mem_end);
 extern void bmap_exclude(uintptr_t start_addr, uintptr_t end_addr);
 extern void* bmap_alloc(size_t num_pages);
 extern void bmap_free(void* page_addr, size_t num_pages);
@@ -22,6 +26,7 @@ extern void bmap_print(void);
 static struct kmem_cache_s* page_cache;
 
 
+static uintptr_t mem_map_init(uintptr_t mem_start, uintptr_t mem_end);
 static uintptr_t detect_mem_end(multiboot_info_t* mbi);
 static void detect_mem_holes(multiboot_info_t* mbi, uintptr_t mem_start);
 static bool mmm_exceeds_max_mem(multiboot_memory_map_t* mmm);
@@ -36,14 +41,13 @@ void mm_init(multiboot_info_t* mbi)
         PANIC("Invalid memory map given by GRUB bootloader");
 	}
 
-	/* Initialize mem_map */
-	for(size_t i = 0; i < LOW_MEM_NUM_PAGES; i++)
-		mem_map[i] = (page_t) {0};
-
 	uintptr_t mem_end = detect_mem_end(mbi);
 
+	/* Initialize mem_map */
+	uintptr_t mem_start = mem_map_init((uintptr_t) &_kernel_end_physical, mem_end);
+
 	/* Initialize bitmap */	
-	uintptr_t mem_start = bmap_init((uintptr_t) &_kernel_end_physical, mem_end);
+	mem_start = bmap_init(mem_start, mem_end);
 
 	/* Detect and exclude memory holes */
 	detect_mem_holes(mbi, mem_start);
@@ -70,6 +74,19 @@ void free_pages(void* page_addr, size_t num_pages)
 
 
 /* Helper Functions */
+
+
+static uintptr_t mem_map_init(uintptr_t mem_start, uintptr_t mem_end)
+{
+	mem_start = ROUND_UP(mem_start, sizeof(page_t));
+	mem_map = (page_t*) P2V(mem_start);
+	mem_map_length = MIN(mem_end / PAGE_SIZE, MEM_MAP_MAX_LENGTH);
+
+	for(size_t i = 0; i < mem_map_length; i++)
+		mem_map[i] = (page_t) {0};
+
+	return mem_start + mem_map_length * sizeof(page_t);
+}
 
 /**
  * Detects and returns the end of the memory.

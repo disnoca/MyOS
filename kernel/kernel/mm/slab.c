@@ -1,8 +1,18 @@
-#include <kernel/arch/i386/slab.h>
+/**
+ * Code for the slab allocator.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/list.h>
+#include <kernel/system.h>
+#include <kernel/mm/slab.h>
+#include <kernel/mm/mm.h>
+
+/* Must be defined: PAGE_SIZE */
+#ifdef __i386__
 #include <kernel/arch/i386/paging.h>
-#include <kernel/arch/i386/mm.h>
-#include <kernel/arch/i386/system.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>

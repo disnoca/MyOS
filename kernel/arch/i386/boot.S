@@ -53,7 +53,8 @@ global _start
 
 PAGE_TABLE_SIZE  equ 4096
 PAGE_TABLE_RANGE equ 4194304
-PAGE_TABLE_ENTRIES_IN_1GB equ 262144
+
+KERNEL_SPACE_PAGE_FRAMES equ 262144	; 1GB
 
 _start:
 	; Save the multiboot magic number and info struct
@@ -91,7 +92,7 @@ _start:
 	loop .loop.pt
 
 .loop.pt.zero.start:
-	mov ecx, PAGE_TABLE_ENTRIES_IN_1GB
+	mov ecx, KERNEL_SPACE_PAGE_FRAMES
 	sub ecx, [esp - 12]					; index of the first high memory page table entry
 
 ; Zero the remaining (high memory) page tables

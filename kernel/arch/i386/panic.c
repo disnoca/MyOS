@@ -1,5 +1,8 @@
+#include <kernel/system.h>
+
 #include <kernel/arch/i386/system.h>
 #include <kernel/arch/i386/vga.h>
+
 #include <stdio.h>
 
 void panic(const char* msg, const char* file, int line)

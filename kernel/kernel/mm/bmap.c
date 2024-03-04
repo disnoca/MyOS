@@ -1,7 +1,17 @@
-#include <kernel/arch/i386/mm.h>
-#include <kernel/arch/i386/paging.h>
-#include <kernel/arch/i386/system.h>
+/**
+ * Code for the memory bitmap.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/utils.h>
+#include <kernel/mm/mm.h>
+#include <kernel/system.h>
+
+/* Must be defined: PAGE_SIZE */
+#ifdef __i386__
+#include <kernel/arch/i386/paging.h>
+#endif
 
 #include <stdint.h>
 #include <stddef.h>
@@ -24,9 +34,9 @@ static size_t free_mem_start_page;
 
 /* The bitmap does not include the static kernel or itself, therefore a page with index x corresponds to entry x - excluded pages. */
 /* Here are some macros to help with conversion: */
-#define PAGE_INDEX_TO_BMAP_ENTRY(pi) 	(pi - free_mem_start_page)
+#define PFN_TO_BMAP_ENTRY(pi) 			(pi - free_mem_start_page)
 #define PAGE_ADDR_TO_BMAP_ENTRY(pa) 	((pa / PAGE_SIZE) - free_mem_start_page)
-#define BMAP_ENTRY_TO_PAGE_INDEX(be) 	(be + free_mem_start_page)
+#define BMAP_ENTRY_TO_PFN(be) 			(be + free_mem_start_page)
 #define BMAP_ENTRY_TO_PAGE_ADDR(be)		((be + free_mem_start_page) * PAGE_SIZE)
 
 
@@ -45,16 +55,16 @@ static void set_pages_free(uintptr_t page_addr, size_t num_pages);
 /**
  * Allocates an initializes the bitmap.
  * 
- * This function assumes that all memory after static kernel is free at the time of the call.
+ * This function assumes that all memory after mem_start is free at the time of the call.
  * 
- * @param static_kernel_end the end address of static kernel memory
+ * @param mem_start the start address of the memory to allocate the bitmap
  * @param mem_end the end address of the memory
  * 
  * @return the start address of available memory
 */
-uintptr_t bmap_init(uintptr_t static_kernel_end, uintptr_t mem_end)
+uintptr_t bmap_init(uintptr_t mem_start, uintptr_t mem_end)
 {
-	free_mem_start = ROUND_UP(static_kernel_end, sizeof(bmap_array_elem_t));
+	free_mem_start = ROUND_UP(mem_start, sizeof(bmap_array_elem_t));
 	mem_end = ROUND_DOWN(mem_end, PAGE_SIZE);
 
 	bmap = (bmap_array_elem_t*) P2V(free_mem_start);
