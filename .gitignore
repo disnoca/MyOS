@@ -1,6 +1,8 @@
+*.a
+*.d
+*.kernel
+*.o
 *.iso
-isodir
-sysroot
+
 .vscode
-bochs
-!bochs/bochssrc.txt
+isodir
