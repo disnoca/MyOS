@@ -43,6 +43,12 @@ size_t mem_map_length;
 #define virt_to_page(v)		((page_t*) (phys_to_page(V2P((uintptr_t) (v)))))
 
 
+/* Page allocation flags */
+#define PA_HIGHMEM	(1 << 0)
+
+#define PA_KERNEL	0
+
+
 /**
  * Initializes the memory manager.
  * 
@@ -60,7 +66,7 @@ void mm_init(multiboot_info_t* mbi);
  * 
  * @return the address of the first page
 */
-void* alloc_pages(size_t num_pages);
+void* alloc_pages(size_t num_pages, unsigned char flags);
 
 /**
  * Frees a contiguous number of pages.
@@ -70,7 +76,8 @@ void* alloc_pages(size_t num_pages);
 */
 void free_pages(void* page_addr, size_t num_pages);
 
-#define alloc_page() alloc_pages(1)
+#define alloc_page(flags) alloc_pages(1, flags)
+
 #define free_page(page_addr) free_pages(page_addr, 1)
 
 

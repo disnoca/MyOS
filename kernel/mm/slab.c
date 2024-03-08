@@ -132,7 +132,7 @@ static void kmem_cache_grow(struct kmem_cache_s* cache)
 {
 	slab_t* slab;
 	size_t slab_size = cache->pages_per_slab * PAGE_SIZE;
-	unsigned char* temp = alloc_pages(cache->pages_per_slab);
+	unsigned char* temp = alloc_pages(cache->pages_per_slab, PA_KERNEL);
 	unsigned char* s_mem = P2V(temp);
 
 	if(OFF_SLAB(cache))

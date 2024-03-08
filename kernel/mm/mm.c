@@ -19,6 +19,9 @@ const unsigned long low_mem_num_pages = HIGH_MEM_PFN;
 extern uintptr_t bmap_init(uintptr_t mem_start, uintptr_t mem_end);
 extern void bmap_exclude(uintptr_t start_addr, uintptr_t end_addr);
 extern void* bmap_alloc(size_t num_pages);
+extern void* bmap_alloc_lower(size_t num_pages, uintptr_t addr_lower);
+extern void* bmap_alloc_upper(size_t num_pages, uintptr_t addr_upper);
+extern void* bmap_alloc_range(size_t num_pages, uintptr_t addr_lower, uintptr_t addr_upper);
 extern void bmap_free(void* page_addr, size_t num_pages);
 extern void bmap_print(void);
 
@@ -60,9 +63,17 @@ void mm_init(multiboot_info_t* mbi)
 }
 
 
-void* alloc_pages(size_t num_pages)
+void* alloc_pages(size_t num_pages, unsigned char flags)
 {
-	return bmap_alloc(num_pages);
+	/* Try to allocate a page from high memory first if specified */
+	if(flags & PA_HIGHMEM)
+	{
+		void* page_addr = bmap_alloc_lower(num_pages, HIGH_MEM_START);
+		if(page_addr != NULL)
+			return page_addr;
+	}
+
+	return bmap_alloc_upper(num_pages, HIGH_MEM_START);
 }
 
 

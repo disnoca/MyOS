@@ -13,8 +13,6 @@
 extern void gdt_init(void);
 extern void idt_init(void);
 
-extern void bmap_print(void);
-
 
 int kmain(multiboot_info_t* mbi, uint32_t magic)
 {
