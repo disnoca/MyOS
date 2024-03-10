@@ -1,3 +1,9 @@
+/**
+ * Code for the Kernel main function.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/multiboot.h>
 #include <kernel/system.h>
 #include <kernel/mm/mm.h>
@@ -5,6 +11,7 @@
 #include <kernel/arch/i386/vga.h>
 #include <kernel/arch/i386/serial.h>
 #include <kernel/arch/i386/pic.h>
+#include <kernel/arch/i386/pci.h>
 
 #include <stdio.h>
 #include <stdint.h>

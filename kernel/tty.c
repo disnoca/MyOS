@@ -1,9 +1,16 @@
+/**
+ * Code for the TTY.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/tty.h>
 
 #ifdef __i386__
 #include <kernel/arch/i386/vga.h>
 #include <kernel/arch/i386/serial.h>
 #endif
+
 
 void tty_putchar(char c)
 {

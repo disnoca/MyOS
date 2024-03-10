@@ -1,3 +1,9 @@
+/**
+ * Code for Kernel Panic.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/system.h>
 
 #include <kernel/arch/i386/system.h>

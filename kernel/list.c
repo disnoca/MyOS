@@ -1,3 +1,9 @@
+/**
+ * Simple doubly-linked list implementation.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/list.h>
 
 

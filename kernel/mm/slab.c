@@ -102,7 +102,7 @@ void kmem_free(void* ptr)
 
 void kmem_cache_init(void)
 {
-	LIST_INIT(&cache_list);
+	LIST_INIT(cache_list);
 
 	init_cache(&cache_cache, "kmem_cache", sizeof(kmem_cache_t), NULL, NULL);
 	list_add_last(&cache_list, &cache_cache.list);
@@ -262,15 +262,17 @@ void kmem_cache_destroy(struct kmem_cache_s* cache)
 static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, void (*constructor)(void*, size_t), void (*destructor)(void*, size_t))
 {
 	/* Initialize slabs lists */
-	LIST_INIT(&cache->slabs_full);
-	LIST_INIT(&cache->slabs_partial);
-	LIST_INIT(&cache->slabs_free);
+	LIST_INIT(cache->slabs_full);
+	LIST_INIT(cache->slabs_partial);
+	LIST_INIT(cache->slabs_free);
 
 	/* Set given parameters */
 	cache->obj_size = obj_size;
 	cache->constructor = constructor;
 	cache->destructor = destructor;
+	
 	strncpy(cache->name, name, CACHE_NAMELEN);
+	cache->name[CACHE_NAMELEN - 1] = '\0';
 
 	/* Calculate remaining parameters */
 	if(OFF_SLAB(cache))
@@ -333,14 +335,14 @@ static kmem_cache_t* general_cache(size_t size)
 */
 static slab_t* slab_get(kmem_cache_t* cache)
 {
-	slab_t* slab = (slab_t*) LIST_FIRST(&cache->slabs_partial);
+	slab_t* slab = (slab_t*) LIST_FIRST(cache->slabs_partial);
 	
 	if(slab == NULL) {
 		/* Grow cache if no partial or free slabs exist */
-		if(LIST_IS_EMPTY(&cache->slabs_free))
+		if(LIST_IS_EMPTY(cache->slabs_free))
 			kmem_cache_grow(cache);
 
-		slab = (slab_t*) LIST_FIRST(&cache->slabs_free);
+		slab = (slab_t*) LIST_FIRST(cache->slabs_free);
 
 		/* Return NULL if cache wasn't able to grow */
 		if(slab == NULL)

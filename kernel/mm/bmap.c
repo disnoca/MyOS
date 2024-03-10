@@ -1,5 +1,5 @@
 /**
- * Code for the memory bitmap.
+ * Code for the page allocation bitmap.
  * 
  * @author Samuel Pires
 */

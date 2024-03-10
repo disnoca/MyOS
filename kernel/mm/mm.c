@@ -1,3 +1,9 @@
+/**
+ * Code for Memory Management.
+ * 
+ * @author Samuel Pires
+*/
+
 #include <kernel/mm/mm.h>
 #include <kernel/utils.h>
 #include <kernel/system.h>
@@ -59,7 +65,7 @@ void mm_init(multiboot_info_t* mbi)
 	kmem_cache_init();
 
 	/* Create a page cache */
-	page_cache = kmem_cache_create("page_cache", sizeof(page_t), NULL, NULL);
+	page_cache = kmem_cache_create("page_cache", sizeof(page_t), mem_zero_cache_constructor, NULL);
 }
 
 

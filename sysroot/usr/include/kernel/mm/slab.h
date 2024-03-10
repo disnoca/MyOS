@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
 
 /**
@@ -61,3 +62,13 @@ void* kmem_alloc(size_t size);
  * @param cache the cache to free the buffer from
 */
 void kmem_free(void* ptr);
+
+
+
+/**
+ * A cache constructor that zeroes the objects.
+*/
+static inline void mem_zero_cache_constructor(void* obj, size_t size)
+{
+	memset(obj, 0, size);
+}

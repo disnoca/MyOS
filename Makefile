@@ -31,8 +31,11 @@ LIBS = -nostdlib -lk -lgcc
 LIBS += $(KERNEL_ARCH_LIBS)
 LIBK_CFLAGS = $(CFLAGS) -D__is_libk
 
-KERNEL_OBJS = $(patsubst %.c,%.o,$(wildcard kernel/*.c))
-KERNEL_OBJS += $(patsubst %.c,%.o,$(wildcard kernel/*/*.c))
+# Add all the non architecture-specific kernel source files to the kernel object list
+KERNEL_OBJS = $(patsubst %.c,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.c kernel/*/*.c)))
+#KERNEL_OBJS += $(patsubst %.S,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.S)))
+
+# Add the correct architecture-specific files to the kernel object list
 KERNEL_OBJS += $(patsubst %.c,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.c))
 KERNEL_OBJS += $(patsubst %.S,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.S))
 

@@ -163,5 +163,6 @@ void gdt_init(void)
 	asm volatile("lgdt [%0]" : : "r" (gdtd));
 	
 	load_kernel_segments();
+	//enable_fast_system_calls();
 }
 

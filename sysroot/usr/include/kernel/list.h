@@ -4,15 +4,17 @@
 #include <stdbool.h>
 
 
-#define LIST_INIT(listp) 	({ list_t* lp = ((list_t*) (listp)); *lp = (list_t) {lp, lp}; })
+#define LIST_INIT(list) 	({ (list) = (list_t) {&(list), &(list)}; })
 
-#define LIST_IS_EMPTY(listp) ({ list_t* lp = ((list_t*) (listp)); lp->next == lp; })
+#define LIST_IS_NULL(list)	(((list_t) (list)).prev == 0 && ((list_t) (list)).next == 0)
 
-/* Returns the first element of a listp or NULL if the listp is empty */
-#define LIST_FIRST(listp) 	(LIST_IS_EMPTY(listp) ? NULL : ((list_t*) listp)->next)
+#define LIST_IS_EMPTY(list) (((list_t) (list)).next == &(list))
 
-/* Clears all entries from a listp */
-#define LIST_CLEAR(listp)	({ list_t* lp = ((list_t*) (listp)); lp->next = lp->prev = lp; })
+/* Returns the first element of a list or NULL if the list is empty */
+#define LIST_FIRST(list) 	(LIST_IS_EMPTY(list) ? NULL : ((list_t) (list)).next)
+
+/* Clears all entries from a list */
+#define LIST_CLEAR(list)	({ ((list_t) (list)).next = ((list_t) (list)).prev = &(list); })
 
 
 typedef struct list_s {
