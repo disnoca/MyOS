@@ -36,7 +36,7 @@ KERNEL_OBJS = $(patsubst %.c,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*
 #KERNEL_OBJS += $(patsubst %.S,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.S)))
 
 # Add the correct architecture-specific files to the kernel object list
-KERNEL_OBJS += $(patsubst %.c,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.c))
+KERNEL_OBJS += $(patsubst %.c,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.c ${KERNEL_ARCH_DIR}/*/*.c))
 KERNEL_OBJS += $(patsubst %.S,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.S))
 
 CRT_OBJS = $(LIB_DIR)/crti.o $(LIB_DIR)/crtbegin.o $(LIB_DIR)/crtend.o $(LIB_DIR)/crtn.o

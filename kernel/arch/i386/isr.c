@@ -11,8 +11,8 @@
 */
 
 #include <stdint.h>
-#include <kernel/arch/i386/pic.h>
-#include <kernel/arch/i386/keyboard.h>
+#include <kernel/arch/i386/drivers/pic.h>
+#include <kernel/arch/i386/drivers/keyboard.h>
 
 #define PIC_OFFSET 32
 

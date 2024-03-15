@@ -3,6 +3,7 @@
 *.kernel
 *.o
 *.iso
+*.img
 
 .vscode
 isodir

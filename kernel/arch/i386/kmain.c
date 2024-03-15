@@ -8,10 +8,12 @@
 #include <kernel/system.h>
 #include <kernel/mm/mm.h>
 
-#include <kernel/arch/i386/vga.h>
-#include <kernel/arch/i386/serial.h>
-#include <kernel/arch/i386/pic.h>
-#include <kernel/arch/i386/pci.h>
+#include <kernel/arch/i386/drivers/vga.h>
+#include <kernel/arch/i386/drivers/serial.h>
+#include <kernel/arch/i386/drivers/pic.h>
+#include <kernel/arch/i386/drivers/pci.h>
+#include <kernel/arch/i386/drivers/ata.h>
+#include <kernel/arch/i386/io.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -29,6 +31,9 @@ int kmain(multiboot_info_t* mbi, uint32_t magic)
 	if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		PANIC("Invalid magic number");
 	}
+
+	ata_init();
+	printf("Detected %hhu ATA device(s)\n", num_ata_devices);
 
 	mm_init(mbi);
 	printf("Detected Memory\n");

@@ -9,7 +9,7 @@
  * @author Samuel Pires
 */
 
-#include <kernel/arch/i386/serial.h>
+#include <kernel/arch/i386/drivers/serial.h>
 #include <kernel/arch/i386/io.h>
 
 #include <stdint.h>

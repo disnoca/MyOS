@@ -7,8 +7,8 @@
 #include <kernel/tty.h>
 
 #ifdef __i386__
-#include <kernel/arch/i386/vga.h>
-#include <kernel/arch/i386/serial.h>
+#include <kernel/arch/i386/drivers/vga.h>
+#include <kernel/arch/i386/drivers/serial.h>
 #endif
 
 

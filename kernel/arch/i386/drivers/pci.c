@@ -8,10 +8,10 @@
  * @author Samuel Pires
 */
 
-#include <kernel/arch/i386/pci.h>
+#include <kernel/arch/i386/drivers/pci.h>
 
 #include <kernel/system.h>
-#include <kernel/mm/slab.h>
+#include <kernel/mm/mm.h>
 #include <kernel/arch/i386/io.h>
 
 
@@ -26,11 +26,7 @@
 	((offset) & 0xFC)
 
 
-
-struct kmem_cache_s* pci_device_descriptor_cache;
-
 list_t connected_devices_list;
-
 
 
 static uint16_t pci_config_read(uint8_t bus, uint8_t device, uint8_t func, uint8_t offset);
@@ -100,13 +96,9 @@ static void pci_config_write(uint8_t bus, uint8_t device, uint8_t function, uint
 static void detect_connected_devices(void)
 {
 	ASSERT(LIST_IS_NULL(connected_devices_list));
-	ASSERT(pci_device_descriptor_cache == NULL);
 
 	/* Initialize list and cache */
 	LIST_INIT(connected_devices_list);
-
-	pci_device_descriptor_cache =
-		kmem_cache_create("pci_device_descriptor_cache", sizeof(pci_device_descriptor_t), NULL, NULL);
 
 
 	/* Loop through each possible device ID to find the ones connected */
@@ -145,7 +137,7 @@ static void detect_connected_devices(void)
 */
 static pci_device_descriptor_t* create_device_descriptor(uint8_t bus, uint8_t device, uint8_t function)
 {
-	pci_device_descriptor_t* pdd = kmem_cache_alloc(pci_device_descriptor_cache);
+	pci_device_descriptor_t* pdd = kmalloc(sizeof(pci_device_descriptor_t));
     
     pdd->bus = bus;
     pdd->device = device;

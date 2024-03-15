@@ -84,5 +84,5 @@ void free_pages(void* page_addr, size_t num_pages);
 
 /* General memory allocation functions */
 
-#define kmalloc(size) kmem_alloc(size)
-#define kfree(ptr) kmem_free(ptr)
+#define kmalloc kmem_alloc
+#define kfree 	kmem_free

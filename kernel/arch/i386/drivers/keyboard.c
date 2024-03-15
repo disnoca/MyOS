@@ -4,7 +4,7 @@
  * @author Samuel Pires
 */
 
-#include <kernel/arch/i386/keyboard.h>
+#include <kernel/arch/i386/drivers/keyboard.h>
 #include <kernel/arch/i386/io.h>
 #include <kernel/tty.h>
 

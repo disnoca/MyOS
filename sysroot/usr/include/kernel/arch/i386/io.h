@@ -28,6 +28,31 @@ static inline uint8_t inb(uint16_t port)
 }
 
 /**
+ *  Sends a word to an I/O port.
+ *
+ *  @param port the I/O port
+ *  @param data the data to be sent
+ */
+static inline void outw(uint16_t port, uint16_t data)
+{
+	asm volatile("out dx, ax" : : "a" (data), "d" (port));
+}
+
+/**
+ *  Reads a word from an I/O port.
+ *
+ *  @param port the I/O port
+ * 
+ *  @return the read word
+ */
+static inline uint16_t inw(uint16_t port)
+{
+	uint16_t data;
+	asm volatile("in ax, dx" : "=a" (data) : "d" (port));
+	return data;
+}
+
+/**
  *  Sends a doubleword to an I/O port.
  *
  *  @param port the I/O port

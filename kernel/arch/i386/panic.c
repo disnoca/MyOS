@@ -7,7 +7,7 @@
 #include <kernel/system.h>
 
 #include <kernel/arch/i386/system.h>
-#include <kernel/arch/i386/vga.h>
+#include <kernel/arch/i386/drivers/vga.h>
 
 #include <stdio.h>
 

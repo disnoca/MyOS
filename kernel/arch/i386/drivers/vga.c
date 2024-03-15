@@ -12,7 +12,7 @@
 
 #include <kernel/mm/mm.h>
 
-#include <kernel/arch/i386/vga.h>
+#include <kernel/arch/i386/drivers/vga.h>
 #include <kernel/arch/i386/io.h>
 
 #include <stdint.h>
