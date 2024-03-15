@@ -25,10 +25,12 @@ unsigned char ata_init(void);
  * 
  * @param dev_id the device ID
  * @param data a pointer to write the data from
- * @param offset the offset to where to write the data to
- * @param size the size of the data to be written
+ * @param lba the lba to start writing the data to
+ * @param sector_count the number of sectors to write
+ * 
+ * @return true if the write was successful, false otherwise
 */
-void ata_write(unsigned char dev_id, void* data, uintptr_t offset, size_t size);
+bool ata_write(unsigned char dev_id, void* data, uint64_t lba, uint16_t sector_count);
 
 /**
  * Reads from an ATA device.
@@ -37,7 +39,9 @@ void ata_write(unsigned char dev_id, void* data, uintptr_t offset, size_t size);
  * 
  * @param dev_id the device ID
  * @param buf a pointer to where to store the data
- * @param offset the offset to where the data is located
- * @param size the size of the data to be read
+ * @param lba the lba to start writing the data to
+ * @param sector_count the number of sectors to write
+ * 
+ * @return true if the read was successful, false otherwise
 */
-void ata_read(unsigned char dev_id, void* buf, uintptr_t offset, size_t size);
+bool ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_count);
