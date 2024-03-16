@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
-. ./build.sh
+./build.sh
 
+cd ..
 mkdir -p isodir
 mkdir -p isodir/boot
 mkdir -p isodir/boot/grub

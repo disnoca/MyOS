@@ -1,6 +1,8 @@
 /**
  * Code for the ATA driver.
  * 
+ * TODO: detect and fix temporary bad sectors, support reads and writes with size < logical sector's
+ * 
  * Refer to:
  * https://wiki.osdev.org/ATA_PIO_Mode
  * 
@@ -52,33 +54,9 @@
 
 #define POLL_ERR_MASK			(STATUS_ERR | STATUS_DF)
 
+#define LBA28_MAX_SECTOR_COUNT	256
+#define LBA48_MAX_SECTOR_COUNT	65536
 
-typedef struct ata_device_s {
-	uint16_t port_base;
-	bool master;
-
-	uint32_t logical_sector_size;
-	uint32_t physical_sector_size;
-	uint16_t logical_sector_alignment;
-
-	/* if sectors = 0, mode is not supported */
-	uint32_t lba28_num_sectors;
-	union {
-		struct {
-			uint32_t lba48_num_sectors_low;
-			uint32_t lba48_num_sectors_high;
-		};
-		uint64_t lba48_num_sectors;
-	};
-
-	uint8_t supported_udma_modes;	/* mode n is supported if bit n-1 is set */
-	uint8_t active_udma_mode;		/* active UDMA mode */
-} ata_device_t;
-
-
-/* An array of connected ATA devices */
-/* Only the first num_ata_devices devices are valid. */
-ata_device_t devs[4];
 
 /* The ID of the currently selected device */
 unsigned char selected_dev_id;
@@ -108,39 +86,40 @@ unsigned char ata_init(void)
 {
 	ASSERT(num_ata_devices == 0);
 
-	num_ata_devices += ata_device_init(devs, PRIMARY_PORT_BASE, true);
-	num_ata_devices += ata_device_init(devs + num_ata_devices, PRIMARY_PORT_BASE, false);
-	num_ata_devices += ata_device_init(devs + num_ata_devices, SECONDARY_PORT_BASE, true);
-	num_ata_devices += ata_device_init(devs + num_ata_devices, SECONDARY_PORT_BASE, false);
+	num_ata_devices += ata_device_init(ata_devices, PRIMARY_PORT_BASE, true);
+	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, PRIMARY_PORT_BASE, false);
+	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, true);
+	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, false);
 
-	ata_select(devs);
+	ata_select(ata_devices);
 	selected_dev_id = 0;
 
 	return num_ata_devices;
 }
 
 
-bool ata_write(unsigned char dev_id, void* data, uint64_t lba, uint16_t sector_count)
+bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
 {
 	ASSERT(dev_id < num_ata_devices);
 
-	ata_device_t* dev = devs + dev_id;
-	if(dev_id != selected_dev_id)
-		ata_select(dev);
+	if(size == 0)
+		return true;
 
-	if(lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
-		return ata_write28(dev, data, lba, sector_count);
-	if(lba < dev->lba48_num_sectors)
-		return ata_write48(dev, data, lba, sector_count);
-	
-	return false;
-}
+	if(offset + size > ATA_DISK_SIZE(dev_id))
+		return false;
 
-bool ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_count)
-{
-	ASSERT(dev_id < num_ata_devices);
+	ata_device_t* dev = ata_devices + dev_id;
 
-	ata_device_t* dev = devs + dev_id;
+	/* Divide read operation if size exceeds the maximum possible for a single one */
+	if(size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
+		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
+		return ata_read(dev_id, buf, offset, op_max_size) &&
+			   ata_read(dev_id, buf + op_max_size, offset, size - op_max_size);
+	}
+
+	uint64_t lba = offset / dev->logical_sector_size;
+	uint16_t sector_count = size / dev->logical_sector_size;
+
 	if(dev_id != selected_dev_id)
 		ata_select(dev);
 
@@ -148,6 +127,43 @@ bool ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_cou
 		return ata_read28(dev, buf, lba, sector_count);
 	if(lba < dev->lba48_num_sectors)
 		return ata_read48(dev, buf, lba, sector_count);
+	
+	return false;
+}
+
+bool ata_write(unsigned char dev_id, void* data, uint64_t offset, uint64_t size)
+{
+	ASSERT(dev_id < num_ata_devices);
+
+	if(size == 0)
+		return true;
+
+	if(offset + size > ATA_DISK_SIZE(dev_id))
+		return false;
+
+	ata_device_t* dev = ata_devices + dev_id;
+
+	/* Restrict writes in sector 0 */
+	uint64_t lba = offset / dev->logical_sector_size;
+	if(lba == 0)
+		return false;
+
+	/* Divide write operation if size exceeds the maximum possible for a single one */
+	if(size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
+		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
+		return ata_write(dev_id, data, offset, op_max_size) &&
+			   ata_write(dev_id, data + op_max_size, offset, size - op_max_size);
+	}
+
+	uint16_t sector_count = size / dev->logical_sector_size;
+
+	if(dev_id != selected_dev_id)
+		ata_select(dev);
+
+	if(lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
+		return ata_write28(dev, data, lba, sector_count);
+	if(lba < dev->lba48_num_sectors)
+		return ata_write48(dev, data, lba, sector_count);
 	
 	return false;
 }
@@ -180,8 +196,10 @@ static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
 	/* Word 83: Bit 10 is set if the drive supports LBA48 mode */
 	if(buf[83] & (1 << 10)) {
 		/*  Words 100 through 103 taken as a uint64_t contain the total number of 48 bit addressable sectors on the drive */
-		dev->lba48_num_sectors_high = (buf[103] << 16) | buf[102];
-		dev->lba48_num_sectors_low = (buf[101] << 16) | buf[100];
+		dev->lba48_num_sectors = (((uint64_t) buf[103]) << 48) |
+								 (((uint64_t) buf[102]) << 32) |
+								 (((uint32_t) buf[101]) << 16) |
+								 buf[100];
 	}
 	else {
 		dev->lba48_num_sectors = 0;
@@ -301,9 +319,8 @@ static bool ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t s
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS);
-	return ata_read_transfer(dev, buf, sector_count ? sector_count : 256);
+	return ata_read_transfer(dev, buf, sector_count ? sector_count : LBA28_MAX_SECTOR_COUNT);
 }
-
 
 /**
  * Writes data to an ATA device using 28-bit PIO.
@@ -321,25 +338,55 @@ static bool ata_write28(ata_device_t* dev, uint16_t* data, uint32_t lba, uint8_t
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS);
-	return ata_write_transfer(dev, data, sector_count ? sector_count : 256);
+	return ata_write_transfer(dev, data, sector_count ? sector_count : LBA28_MAX_SECTOR_COUNT);
 }
 
-
+/**
+ * Reads data from an ATA device using 48-bit PIO.
+ * 
+ * Assumes that the device is already selected.
+ * 
+ * @param dev the device
+ * @param buf the buffer to read the data to
+ * @param lba the LBA
+ * @param sector_count the number of sectors to read
+ * 
+ * @return true if the read completed successfully, false otherwise
+*/
 static bool ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS_EXT);
-	return ata_read_transfer(dev, buf, sector_count ? sector_count : 65536);
+	return ata_read_transfer(dev, buf, sector_count ? sector_count : LBA48_MAX_SECTOR_COUNT);
 }
 
+/**
+ * Writes data to an ATA device using 48-bit PIO.
+ * 
+ * Assumes that the device is already selected.
+ * 
+ * @param dev the device
+ * @param data an array to write the data from
+ * @param lba the LBA
+ * @param sector_count the number of sectors to write
+ * 
+ * @return true if the write completed successfully, false otherwise
+*/
 static bool ata_write48(ata_device_t* dev, uint16_t* data, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS_EXT);
-	return ata_write_transfer(dev, data, sector_count ? sector_count : 65536);
+	return ata_write_transfer(dev, data, sector_count ? sector_count : LBA48_MAX_SECTOR_COUNT);
 }
 
 
+/**
+ * Prepares a device for a PIO LBA28 operation.
+ * 
+ * @param dev the device to prepare
+ * @param lba the operation's starting LBA
+ * @param sector_count the operation's sector count
+*/
 static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_count)
 {
 	/* Assert that the lba is addressable with 28 bits */
@@ -357,6 +404,13 @@ static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_co
 	outb(dev->port_base + PORT_LBA_HI, lba >> 16);
 }
 
+/**
+ * Prepares a device for a PIO LBA48 operation.
+ * 
+ * @param dev the device to prepare
+ * @param lba the operation's starting LBA
+ * @param sector_count the operation's sector count
+*/
 static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_count)
 {
 	/* Assert that the lba is addressable with 48 bits */
@@ -374,10 +428,20 @@ static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_c
 }
 
 /**
+ * Transfers data between a device and memory after a read command has been sent.
+ * 
  * The sector_count argument must correspond to the actual number of sectors to read, not zero.
+ * 
+ * @param dev the device read from
+ * @param buf the buffer to write to
+ * @param sector_count the number of sectors to read
+ * 
+ * @return true if the data transfer was successful, false otherwise
 */
 static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count)
 {
+	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
+
 	for(uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready */
@@ -385,8 +449,8 @@ static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_
 			return false;
 
 		/* Transfer 256 16-bit values, a word at a time, from the data port into your buffer */
-		for(uint32_t j = 0; j < dev->logical_sector_size / sizeof(uint16_t); j++)
-			buf[i * dev->logical_sector_size + j] = inw(dev->port_base + PORT_DATA);
+		for(uint32_t j = 0; j < words_per_sector; j++)
+			buf[i * words_per_sector + j] = inw(dev->port_base + PORT_DATA);
 
 		ata_io_wait(dev);
 	}
@@ -395,10 +459,20 @@ static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_
 }
 
 /**
- *  The sector_count argument must correspond to the actual number of sectors to write, not zero.
+ * Transfers data between memory and a device after a write command has been sent.
+ * 
+ * The sector_count argument must correspond to the actual number of sectors to write, not zero.
+ * 
+ * @param dev the device write to
+ * @param data the address to read from
+ * @param sector_count the number of sectors to write
+ * 
+ * @return true if the data transfer was successful, false otherwise
 */
 static bool ata_write_transfer(ata_device_t* dev, uint16_t* data, uint32_t sector_count)
 {
+	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
+
 	for(uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready*/
@@ -406,8 +480,8 @@ static bool ata_write_transfer(ata_device_t* dev, uint16_t* data, uint32_t secto
 			return false;
 
 		/* Transfer 256 16-bit values, a word at a time, from memory into the data port */
-		for(uint32_t j = 0; j < dev->logical_sector_size / sizeof(uint16_t); j++)
-			outw(dev->port_base + PORT_DATA, data[i * dev->logical_sector_size + j]);
+		for(uint32_t j = 0; j < words_per_sector; j++)
+			outw(dev->port_base + PORT_DATA, data[i * words_per_sector + j]);
 
 		/* Flush the data */
 		outb(dev->port_base + PORT_COMMAND, COMMAND_FLUSH);

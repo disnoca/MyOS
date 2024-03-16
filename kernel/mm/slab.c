@@ -6,6 +6,7 @@
 
 #include <kernel/list.h>
 #include <kernel/system.h>
+#include <kernel/utils.h>
 #include <kernel/mm/slab.h>
 #include <kernel/mm/mm.h>
 
@@ -22,8 +23,8 @@
 
 #define ON_SLAB_MAX_SIZE    	(PAGE_SIZE / 8)
 
-/* The number of objs per slab in slabs that have an off-slab kmem_bufctl_t */
-#define OFF_SLAB_OBJS_PER_SLAB 	4
+/* The minimum number of objs per slab in slabs that have an off-slab kmem_bufctl_t */
+#define OFF_SLAB_MIN_OBJS_PER_SLAB 	4
 
 /* true if the cache's slab managers are off-slab */
 #define OFF_SLAB(cache)    		(((kmem_cache_t*) (cache))->obj_size > ON_SLAB_MAX_SIZE)
@@ -276,22 +277,33 @@ static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, v
 
 	/* Calculate remaining parameters */
 	if(OFF_SLAB(cache))
-		cache->pages_per_slab = obj_size * OFF_SLAB_OBJS_PER_SLAB / PAGE_SIZE;
+	{
+		/* Make sure each slab has at least OFF_SLAB_MIN_OBJS_PER_SLAB objs */
+		if(obj_size > PAGE_SIZE)
+			cache->objs_per_slab = OFF_SLAB_MIN_OBJS_PER_SLAB;
+		else {
+			cache->objs_per_slab = PAGE_SIZE / obj_size;
+			while(cache->objs_per_slab < OFF_SLAB_MIN_OBJS_PER_SLAB)
+				cache->objs_per_slab *= 2;
+		}
+
+		cache->pages_per_slab = DIV_ROUND_UP(obj_size * cache->objs_per_slab, PAGE_SIZE);
+	}
+	
 	else
+	{
 		cache->pages_per_slab = 1;
 
-	size_t slab_size = cache->pages_per_slab * PAGE_SIZE;
+		size_t slab_size = cache->pages_per_slab * PAGE_SIZE;
 
-	if(!OFF_SLAB(cache)) {
 		cache->objs_per_slab = slab_size / obj_size;
 		unsigned int remaining = slab_size % obj_size;
 
+		/* Decrease slab space for objs until there's enough space for slab_t */
 		while(remaining < SIZE_OF_SLAB_T(cache)) {
 			cache->objs_per_slab--;
 			remaining += obj_size;
 		}
-	} else {
-		cache->objs_per_slab = slab_size / obj_size;
 	}
 }
 

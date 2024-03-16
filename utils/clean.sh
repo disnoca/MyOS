@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-cd .. && make clean
+cd ..
+make clean
 
 rm -rf isodir
 rm -rf myos.iso
