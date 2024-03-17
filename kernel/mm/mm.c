@@ -46,7 +46,7 @@ static bool mmm_exceeds_max_mem(multiboot_memory_map_t* mmm);
 void mm_init(multiboot_info_t* mbi)
 {
 	/* Check if there's a valid memory map */
-    if(!(mbi->flags & MULTIBOOT_INFO_MEM_MAP)) {
+    if (!(mbi->flags & MULTIBOOT_INFO_MEM_MAP)) {
         PANIC("Invalid memory map given by GRUB bootloader");
 	}
 
@@ -72,10 +72,10 @@ void mm_init(multiboot_info_t* mbi)
 void* alloc_pages(size_t num_pages, unsigned char flags)
 {
 	/* Try to allocate a page from high memory first if specified */
-	if(flags & PA_HIGHMEM)
+	if (flags & PA_HIGHMEM)
 	{
 		void* page_addr = bmap_alloc_lower(num_pages, HIGH_MEM_START);
-		if(page_addr != NULL)
+		if (page_addr != NULL)
 			return page_addr;
 	}
 
@@ -99,7 +99,7 @@ static uintptr_t mem_map_init(uintptr_t mem_start, uintptr_t mem_end)
 	mem_map = (page_t*) P2V(mem_start);
 	mem_map_length = MIN(mem_end / PAGE_SIZE, MEM_MAP_MAX_LENGTH);
 
-	for(size_t i = 0; i < mem_map_length; i++)
+	for (size_t i = 0; i < mem_map_length; i++)
 		mem_map[i] = (page_t) {0};
 
 	return mem_start + mem_map_length * sizeof(page_t);
@@ -116,18 +116,18 @@ static uintptr_t detect_mem_end(multiboot_info_t* mbi)
 {
 	multiboot_memory_map_t* last_available_mmm = NULL;
 
-	for(unsigned int i = 0; i < mbi->mmap_length; i += sizeof(multiboot_memory_map_t)) {
+	for (unsigned int i = 0; i < mbi->mmap_length; i += sizeof(multiboot_memory_map_t)) {
         multiboot_memory_map_t* mmm = (multiboot_memory_map_t*) P2V(mbi->mmap_addr + i);
 
-		if(mmm->type == MULTIBOOT_MEMORY_AVAILABLE)
+		if (mmm->type == MULTIBOOT_MEMORY_AVAILABLE)
 			last_available_mmm = mmm;
 	}
 
-	if(last_available_mmm == NULL) {
+	if (last_available_mmm == NULL) {
 		PANIC("No usable memory found in multiboot memory map");
 	}
 
-	if(mmm_exceeds_max_mem(last_available_mmm))
+	if (mmm_exceeds_max_mem(last_available_mmm))
 		return 0xFFFFFFFF;
 
 	return last_available_mmm->addr_low + last_available_mmm->len_low;
@@ -144,19 +144,19 @@ static void detect_mem_holes(multiboot_info_t* mbi, uintptr_t mem_start)
 {
 	uintptr_t curr_addr = mem_start;
 
-	for(unsigned int i = 0; i < mbi->mmap_length; i += sizeof(multiboot_memory_map_t)) {
+	for (unsigned int i = 0; i < mbi->mmap_length; i += sizeof(multiboot_memory_map_t)) {
         multiboot_memory_map_t* mmm = (multiboot_memory_map_t*) P2V(mbi->mmap_addr + i);
 
-		if(mmm->type == MULTIBOOT_MEMORY_AVAILABLE)
+		if (mmm->type == MULTIBOOT_MEMORY_AVAILABLE)
 		{
 			/* Ignore memory above 4GB */
-			if(mmm_exceeds_max_mem(mmm))
+			if (mmm_exceeds_max_mem(mmm))
 				break;
 
-			if(mmm->addr_low > curr_addr)
+			if (mmm->addr_low > curr_addr)
 				bmap_exclude(curr_addr, mmm->addr_low);
 
-			if(mmm->addr_low + mmm->len_low > curr_addr)
+			if (mmm->addr_low + mmm->len_low > curr_addr)
 				curr_addr = mmm->addr_low + mmm->len_low;
 		}
 	}

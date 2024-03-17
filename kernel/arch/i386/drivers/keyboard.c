@@ -161,37 +161,37 @@ void keyboard_read_input(void)
     uint8_t scan_code = inb(KBD_DATA_PORT);
 	bool had_extended_byte = 0;
 
-	if(scan_code == EXTENDED_KEY) {
+	if (scan_code == EXTENDED_KEY) {
 		scan_code = inb(KBD_DATA_PORT);
 		had_extended_byte = 1;
 	}
 
-	if(read_special_key(scan_code, had_extended_byte))
+	if (read_special_key(scan_code, had_extended_byte))
 		return;
 
 	/* return on (non-special) key released */
-	if(scan_code >> 7)
+	if (scan_code >> 7)
 		return;
 
 	char c;
 
-	if(special_keys_flags & FLAGS_SHIFT)
+	if (special_keys_flags & FLAGS_SHIFT)
 		c = scan_to_ascii[TABLE_SHIFT][scan_code];
 
 	/* for some reason altgr is sending both alts instead of the expected alt+ctrl as scan
 	   codes therefore we check if both alt flags are set to see if altgr is being pressed */
-	else if((special_keys_flags & FLAGS_ALT) == FLAGS_ALT)
+	else if ((special_keys_flags & FLAGS_ALT) == FLAGS_ALT)
 		c = scan_to_ascii[TABLE_ALTGR][scan_code];
 
 	else {
 		c = scan_to_ascii[TABLE_NORMAL][scan_code];
 
-		if((special_keys_flags & FLAG_CAPS) && IS_LOWERCASE_LETTER(c))
+		if ((special_keys_flags & FLAG_CAPS) && IS_LOWERCASE_LETTER(c))
 			c = LOWERCASE_TO_UPPERCASE(c);
 	}
 
 	/* invalid/not yet implemented character */
-	if(c == 0)
+	if (c == 0)
 		return;
 
 	tty_putchar(c);

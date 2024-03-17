@@ -112,7 +112,7 @@ bool serial_init()
 	outb(SERIAL_DATA_PORT(com), 0xAE);                 // Test serial chip (send byte 0xAE and check if serial returns same byte)
  
 	// Check if serial is faulty (i.e: not same byte as sent)
-	if(inb(SERIAL_DATA_PORT(com)) != 0xAE)
+	if (inb(SERIAL_DATA_PORT(com)) != 0xAE)
 	   return false;
 
 	// If serial is not faulty, disable looback mode
@@ -135,14 +135,14 @@ static int serial_transmit_fifo_empty(unsigned int com)
 
 void serial_write(const char* data, size_t size)
 {
-	for(size_t i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 		serial_writechar(data[i]);
 }
 
 
 void serial_writestring(const char* str)
 {
-	for(size_t i = 0; str[i] != '\0'; i++)
+	for (size_t i = 0; str[i] != '\0'; i++)
 		serial_writechar(str[i]);
 }
 
@@ -151,6 +151,6 @@ void serial_writechar(char c)
 {
 	uint16_t com = SERIAL_COM1_BASE;
 
-	while(!serial_transmit_fifo_empty(com)) {}
+	while (!serial_transmit_fifo_empty(com)) {}
 	outb(com, c);
 }

@@ -41,7 +41,7 @@ static pci_device_descriptor_t* create_device_descriptor(uint8_t bus, uint8_t de
 
 list_t* pci_get_connected_devices(void)
 {
-	if(LIST_IS_NULL(connected_devices_list))
+	if (LIST_IS_NULL(connected_devices_list))
 		detect_connected_devices();
 
 	return &connected_devices_list;
@@ -102,18 +102,18 @@ static void detect_connected_devices(void)
 
 
 	/* Loop through each possible device ID to find the ones connected */
-	for(int bus = 0; bus < 8; bus++) {
-        for(int device = 0; device < 32; device++)
+	for (int bus = 0; bus < 8; bus++) {
+        for (int device = 0; device < 32; device++)
 		{
 			/* Ignore non-connected devices */
-			if(!DEVICE_IS_CONNECTED(bus, device))
+			if (!DEVICE_IS_CONNECTED(bus, device))
 				continue;
 
             int numFunctions = IS_MULTIFUNCTION_DEVICE(bus, device) ? 8 : 1;
-            for(int function = 0; function < numFunctions; function++)
+            for (int function = 0; function < numFunctions; function++)
 			{
 				/* Ignore non-existent functions */
-				if(!DEVICE_HAS_FUNCTION(bus, device, function))
+				if (!DEVICE_HAS_FUNCTION(bus, device, function))
 					continue;
 
 				pci_device_descriptor_t* pdd = create_device_descriptor(bus, device, function);

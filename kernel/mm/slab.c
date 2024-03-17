@@ -82,12 +82,12 @@ static kmem_cache_t* general_cache(size_t size);
 
 void* kmem_alloc(size_t size)
 {
-	if(size == 0)
+	if (size == 0)
 		return NULL;
 
 	kmem_cache_t* cache = general_cache(size);
 
-	if(cache == NULL)
+	if (cache == NULL)
 		return NULL;
 
 	return kmem_cache_alloc(cache);
@@ -109,7 +109,7 @@ void kmem_cache_init(void)
 	list_add_last(&cache_list, &cache_cache.list);
 	
 	/* Initialize general caches */
-	for(unsigned int i = 0; i < NUM_GENERAL_CACHES; i++)
+	for (unsigned int i = 0; i < NUM_GENERAL_CACHES; i++)
 		general_caches[i] = kmem_cache_create("kmem_cache", general_cache_sizes[i], NULL, NULL);
 }
 
@@ -136,7 +136,7 @@ static void kmem_cache_grow(struct kmem_cache_s* cache)
 	unsigned char* temp = alloc_pages(cache->pages_per_slab, PA_KERNEL);
 	unsigned char* s_mem = P2V(temp);
 
-	if(OFF_SLAB(cache))
+	if (OFF_SLAB(cache))
 		slab = kmem_alloc(SIZE_OF_SLAB_T(cache));
 	else
 		slab = (slab_t*) (s_mem + slab_size - SIZE_OF_SLAB_T(cache));
@@ -145,11 +145,11 @@ static void kmem_cache_grow(struct kmem_cache_s* cache)
 	slab->num_free = cache->objs_per_slab;
 
 	/* Initialize the objects and the free array */
-	for(unsigned int i = 0; i < slab->num_free; i++)
+	for (unsigned int i = 0; i < slab->num_free; i++)
 	{
 		slab->free[i] = i;
 
-		if(cache->constructor != NULL)
+		if (cache->constructor != NULL)
 			cache->constructor(((unsigned char*) (slab->s_mem)) + i * cache->obj_size, cache->obj_size);
 	}
 
@@ -157,7 +157,7 @@ static void kmem_cache_grow(struct kmem_cache_s* cache)
 
 	/* Save cache and slab in corresponding pages */
 	page_t* page = virt_to_page(s_mem);
-	for(unsigned int i = 0; i < cache->pages_per_slab; i++) {
+	for (unsigned int i = 0; i < cache->pages_per_slab; i++) {
 		page->cache = cache;
 		page->slab = slab;
 		page++;
@@ -184,19 +184,19 @@ void* kmem_cache_alloc(struct kmem_cache_s* cache)
 {
 	slab_t* slab = slab_get(cache);
 
-	if(slab == NULL)
+	if (slab == NULL)
 		return NULL;
 
 	void* buf = ((unsigned char*) slab->s_mem) + slab->free[--slab->num_free] * cache->obj_size;
 
 	/* If the slab was free, move it to partial list */
-	if(slab->num_free == cache->objs_per_slab - 1) {
+	if (slab->num_free == cache->objs_per_slab - 1) {
 		ASSERT(list_remove(&cache->slabs_free, &slab->list));
 		list_add_last(&cache->slabs_partial,  &slab->list);
 	}
 
 	/* If no free buffers remain, move the slab from partial list to the full list */
-	if(slab->num_free == 0) {
+	if (slab->num_free == 0) {
 		ASSERT(list_remove(&cache->slabs_partial, &slab->list));
 		list_add_last(&cache->slabs_full,  &slab->list);
 	}
@@ -216,13 +216,13 @@ void kmem_cache_free(kmem_cache_t* cache, void* ptr)
 	slab->free[(slab->num_free)++] = index;
 
 	/* If the freed object belonged to a full list, move it to partial */
-	if(slab->num_free == 1) {
+	if (slab->num_free == 1) {
 		ASSERT(list_remove(&cache->slabs_full, &slab->list));
 		list_add_last(&cache->slabs_partial, &slab->list);
 	}
 
 	/* If all objects are free, move slab to free list and reap the cache */
-	if(slab->num_free == cache->objs_per_slab) {
+	if (slab->num_free == cache->objs_per_slab) {
 		ASSERT(list_remove(&cache->slabs_partial, &slab->list));
 		list_add_last(&cache->slabs_free, &slab->list);
 		kmem_cache_reap(cache);
@@ -276,14 +276,14 @@ static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, v
 	cache->name[CACHE_NAMELEN - 1] = '\0';
 
 	/* Calculate remaining parameters */
-	if(OFF_SLAB(cache))
+	if (OFF_SLAB(cache))
 	{
 		/* Make sure each slab has at least OFF_SLAB_MIN_OBJS_PER_SLAB objs */
-		if(obj_size > PAGE_SIZE)
+		if (obj_size > PAGE_SIZE)
 			cache->objs_per_slab = OFF_SLAB_MIN_OBJS_PER_SLAB;
 		else {
 			cache->objs_per_slab = PAGE_SIZE / obj_size;
-			while(cache->objs_per_slab < OFF_SLAB_MIN_OBJS_PER_SLAB)
+			while (cache->objs_per_slab < OFF_SLAB_MIN_OBJS_PER_SLAB)
 				cache->objs_per_slab *= 2;
 		}
 
@@ -300,7 +300,7 @@ static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, v
 		unsigned int remaining = slab_size % obj_size;
 
 		/* Decrease slab space for objs until there's enough space for slab_t */
-		while(remaining < SIZE_OF_SLAB_T(cache)) {
+		while (remaining < SIZE_OF_SLAB_T(cache)) {
 			cache->objs_per_slab--;
 			remaining += obj_size;
 		}
@@ -318,15 +318,15 @@ static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, v
 static kmem_cache_t* general_cache(size_t size)
 {
 	/* Return NULL on size 0 requests */
-	if(size == 0)
+	if (size == 0)
 		return NULL;
 
 	kmem_cache_t* cache = NULL;
 	
 	/* Search backwards in the general caches' until one doesn't fit or smallest is reached */
-	for(int i = NUM_GENERAL_CACHES - 1; i >= 0; i--)
+	for (int i = NUM_GENERAL_CACHES - 1; i >= 0; i--)
 	{
-		if(size > general_caches[i]->obj_size)
+		if (size > general_caches[i]->obj_size)
 			break;
 
 		cache = general_caches[i];
@@ -349,15 +349,15 @@ static slab_t* slab_get(kmem_cache_t* cache)
 {
 	slab_t* slab = (slab_t*) LIST_FIRST(cache->slabs_partial);
 	
-	if(slab == NULL) {
+	if (slab == NULL) {
 		/* Grow cache if no partial or free slabs exist */
-		if(LIST_IS_EMPTY(cache->slabs_free))
+		if (LIST_IS_EMPTY(cache->slabs_free))
 			kmem_cache_grow(cache);
 
 		slab = (slab_t*) LIST_FIRST(cache->slabs_free);
 
 		/* Return NULL if cache wasn't able to grow */
-		if(slab == NULL)
+		if (slab == NULL)
 			return NULL;
 	}
 
@@ -377,18 +377,18 @@ static void slab_destroy(kmem_cache_t* cache, slab_t* slab)
 {
 	/* Remove cache and slab from corresponding pages */
 	page_t* page = virt_to_page(slab->s_mem);
-	for(unsigned int i = 0; i < cache->pages_per_slab; i++) {
+	for (unsigned int i = 0; i < cache->pages_per_slab; i++) {
 		page->cache = NULL;
 		page->slab = NULL;
 		page++;
 	}
 
-	if(cache->destructor != NULL)
-		for(unsigned int i = 0; i < cache->objs_per_slab; i++)
+	if (cache->destructor != NULL)
+		for (unsigned int i = 0; i < cache->objs_per_slab; i++)
 			cache->destructor(((unsigned char*) (slab->s_mem)) + i * cache->obj_size, cache->obj_size);
 
 	free_pages(V2P(slab->s_mem), cache->pages_per_slab);
 
-	if(OFF_SLAB(cache))
+	if (OFF_SLAB(cache))
 		kmem_free(slab);
 }

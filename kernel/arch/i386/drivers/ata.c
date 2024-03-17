@@ -102,16 +102,16 @@ bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
 {
 	ASSERT(dev_id < num_ata_devices);
 
-	if(size == 0)
+	if (size == 0)
 		return true;
 
-	if(offset + size > ATA_DISK_SIZE(dev_id))
+	if (offset + size > ATA_DISK_SIZE(dev_id))
 		return false;
 
 	ata_device_t* dev = ata_devices + dev_id;
 
 	/* Divide read operation if size exceeds the maximum possible for a single one */
-	if(size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
+	if (size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
 		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
 		return ata_read(dev_id, buf, offset, op_max_size) &&
 			   ata_read(dev_id, buf + op_max_size, offset, size - op_max_size);
@@ -120,12 +120,12 @@ bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
 	uint64_t lba = offset / dev->logical_sector_size;
 	uint16_t sector_count = size / dev->logical_sector_size;
 
-	if(dev_id != selected_dev_id)
+	if (dev_id != selected_dev_id)
 		ata_select(dev);
 
-	if(lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
+	if (lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
 		return ata_read28(dev, buf, lba, sector_count);
-	if(lba < dev->lba48_num_sectors)
+	if (lba < dev->lba48_num_sectors)
 		return ata_read48(dev, buf, lba, sector_count);
 	
 	return false;
@@ -135,21 +135,21 @@ bool ata_write(unsigned char dev_id, void* data, uint64_t offset, uint64_t size)
 {
 	ASSERT(dev_id < num_ata_devices);
 
-	if(size == 0)
+	if (size == 0)
 		return true;
 
-	if(offset + size > ATA_DISK_SIZE(dev_id))
+	if (offset + size > ATA_DISK_SIZE(dev_id))
 		return false;
 
 	ata_device_t* dev = ata_devices + dev_id;
 
 	/* Restrict writes in sector 0 */
 	uint64_t lba = offset / dev->logical_sector_size;
-	if(lba == 0)
+	if (lba == 0)
 		return false;
 
 	/* Divide write operation if size exceeds the maximum possible for a single one */
-	if(size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
+	if (size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
 		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
 		return ata_write(dev_id, data, offset, op_max_size) &&
 			   ata_write(dev_id, data + op_max_size, offset, size - op_max_size);
@@ -157,12 +157,12 @@ bool ata_write(unsigned char dev_id, void* data, uint64_t offset, uint64_t size)
 
 	uint16_t sector_count = size / dev->logical_sector_size;
 
-	if(dev_id != selected_dev_id)
+	if (dev_id != selected_dev_id)
 		ata_select(dev);
 
-	if(lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
+	if (lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
 		return ata_write28(dev, data, lba, sector_count);
-	if(lba < dev->lba48_num_sectors)
+	if (lba < dev->lba48_num_sectors)
 		return ata_write48(dev, data, lba, sector_count);
 	
 	return false;
@@ -187,14 +187,14 @@ static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
 
 	uint16_t buf[IDENTIFY_NUM_WORDS];
 
-	if(!ata_identify(dev, buf))
+	if (!ata_identify(dev, buf))
 		return false;
 
 	/* Words 60 & 61 taken as a uint32_t contain the total number of 28 bit LBA addressable sectors on the drive */
 	dev->lba28_num_sectors = (buf[61] << 16) | buf[60];
 
 	/* Word 83: Bit 10 is set if the drive supports LBA48 mode */
-	if(buf[83] & (1 << 10)) {
+	if (buf[83] & (1 << 10)) {
 		/*  Words 100 through 103 taken as a uint64_t contain the total number of 48 bit addressable sectors on the drive */
 		dev->lba48_num_sectors = (((uint64_t) buf[103]) << 48) |
 								 (((uint64_t) buf[102]) << 32) |
@@ -216,17 +216,17 @@ static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
 	dev->logical_sector_alignment = 0;
 
 	/* Retrieve info about drive's logical and physical sectors */
-	if(!(buf[106] & (1 << 15)) && buf[106] & (1 << 14))
+	if (!(buf[106] & (1 << 15)) && buf[106] & (1 << 14))
 	{
-		if(buf[106] & (1 << 12))
+		if (buf[106] & (1 << 12))
 			dev->logical_sector_size = ((buf[118] << 16) | buf[117]) * sizeof(uint16_t);
 
 		dev->physical_sector_size = dev->logical_sector_size;
 
-		if(buf[106] & (1 << 13)) {
+		if (buf[106] & (1 << 13)) {
 			dev->physical_sector_size = dev->logical_sector_size << (buf[106] & 0x0F);
 
-			if(!(buf[209] & (1 << 15)) && buf[209] & (1 << 14))
+			if (!(buf[209] & (1 << 15)) && buf[209] & (1 << 14))
 				dev->logical_sector_alignment = buf[209] & 0xC;
 		}
 	}
@@ -256,47 +256,47 @@ static bool ata_identify(ata_device_t* dev, uint16_t* buf)
 	outb(dev->port_base + PORT_COMMAND, COMMAND_IDENTIFY);
 
 	/* Read the Status port. If the value read is 0, the drive does not exist */
-	if(!inb(dev->port_base + PORT_STATUS))
+	if (!inb(dev->port_base + PORT_STATUS))
 		return false;
 
 	uint8_t status;
 
 	/* Poll the Status port until BSY clears */
 	unsigned int timer = 0xFFFFFF;
-	while(--timer) {
+	while (--timer) {
 		status = inb(dev->port_base + PORT_STATUS);
 
-		if(!(status & STATUS_BSY))
+		if (!(status & STATUS_BSY))
 			break;
 
-		if(status & STATUS_ERR)
+		if (status & STATUS_ERR)
 			return false;
 	}
 
-	if(timer == 0)
+	if (timer == 0)
 		return false;
 
 	/* Check the LBAmid and LBAhi ports to see if they are non-zero. If so, the drive is not ATA */
-	if(inb(dev->port_base + PORT_LBA_MID) || inb(dev->port_base + PORT_LBA_HI))
+	if (inb(dev->port_base + PORT_LBA_MID) || inb(dev->port_base + PORT_LBA_HI))
 		return false;
 
 	/* Poll the Status port until DRQ sets */
 	timer = 0xFFFFFF;
-	while(--timer) {
+	while (--timer) {
 		status = inb(dev->port_base + PORT_STATUS);
 
-		if(status & STATUS_DRQ)
+		if (status & STATUS_DRQ)
 			break;
 
-		if(status & STATUS_ERR)
+		if (status & STATUS_ERR)
 			return false;
 	}
 
-	if(timer == 0)
+	if (timer == 0)
 		return false;
 
 	/* Read the data from the IDENTIFY command */
-	for(int i = 0; i < IDENTIFY_NUM_WORDS; i++)
+	for (int i = 0; i < IDENTIFY_NUM_WORDS; i++)
 		buf[i] = inw(dev->port_base + PORT_DATA);
 
 	return true;
@@ -442,14 +442,14 @@ static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
-	for(uint32_t i = 0; i < sector_count; i++)
+	for (uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready */
-		if(!ata_poll(dev))
+		if (!ata_poll(dev))
 			return false;
 
 		/* Transfer 256 16-bit values, a word at a time, from the data port into your buffer */
-		for(uint32_t j = 0; j < words_per_sector; j++)
+		for (uint32_t j = 0; j < words_per_sector; j++)
 			buf[i * words_per_sector + j] = inw(dev->port_base + PORT_DATA);
 
 		ata_io_wait(dev);
@@ -473,19 +473,19 @@ static bool ata_write_transfer(ata_device_t* dev, uint16_t* data, uint32_t secto
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
-	for(uint32_t i = 0; i < sector_count; i++)
+	for (uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready*/
-		if(!ata_poll(dev))
+		if (!ata_poll(dev))
 			return false;
 
 		/* Transfer 256 16-bit values, a word at a time, from memory into the data port */
-		for(uint32_t j = 0; j < words_per_sector; j++)
+		for (uint32_t j = 0; j < words_per_sector; j++)
 			outw(dev->port_base + PORT_DATA, data[i * words_per_sector + j]);
 
 		/* Flush the data */
 		outb(dev->port_base + PORT_COMMAND, COMMAND_FLUSH);
-		while(inb(dev->port_base + PORT_STATUS) & STATUS_BSY) {}
+		while (inb(dev->port_base + PORT_STATUS) & STATUS_BSY) {}
 	}
 
 	return true;
@@ -519,13 +519,13 @@ static bool ata_poll(ata_device_t* dev)
 	/* Read the Regular Status port until the BSY bit clears, and the DRQ bit sets or until the ERR bit or DF bit sets.
 	   If neither error bit is set, the device is ready. */
 	int timer = 0xFFFFFF;
-	while(--timer) {
+	while (--timer) {
 		uint8_t status = inb(dev->port_base + PORT_STATUS);
 
-		if(!(status & STATUS_BSY) && (status & STATUS_DRQ))
+		if (!(status & STATUS_BSY) && (status & STATUS_DRQ))
 			break;
 
-		if(status & POLL_ERR_MASK)
+		if (status & POLL_ERR_MASK)
 			return false;
 	}
 

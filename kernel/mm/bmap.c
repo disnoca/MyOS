@@ -87,7 +87,7 @@ uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 	mem_start += bmap_size;
 
 	/* If bitmap occupies previously considered free pages */
-	if(mem_start > aligned_free_mem_start)
+	if (mem_start > aligned_free_mem_start)
 	{
 		size_t additional_bmap_mem = mem_start - aligned_free_mem_start;
 
@@ -104,12 +104,12 @@ uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 	mem_start = aligned_free_mem_start;
 	bmap_arr_length = bmap_size / sizeof(bmap_array_elem_t);
 
-	if(mem_start >= mem_end) {
+	if (mem_start >= mem_end) {
 		PANIC("Not enough memory to allocate bitmap");
 	}
 
 	/* Set all pages as free */
-	for(unsigned int i = 0; i < bmap_arr_length - 1; i++)
+	for (unsigned int i = 0; i < bmap_arr_length - 1; i++)
 		bmap[i] = 0;
 
 	/* Set leftover pages as used */
@@ -163,18 +163,18 @@ void* bmap_alloc_upper(size_t num_pages, uintptr_t addr_upper)
 */
 void* bmap_alloc_range(size_t num_pages, uintptr_t addr_lower, uintptr_t addr_upper)
 {
-	if(num_pages == 0)
+	if (num_pages == 0)
 		return NULL;
 
 	/* Return NULL if the specified range doesn't contain memory */
-	if(addr_lower >= mem_end || addr_upper <= mem_start)
+	if (addr_lower >= mem_end || addr_upper <= mem_start)
 		return NULL;
 
 	addr_lower = MAX(addr_lower, mem_start);
 	addr_upper = MIN(addr_upper, mem_end);
 
 	/* Return NULL if there isn't enough memory in the specified range to satisfy the request */
-	if((addr_upper - addr_lower) / PAGE_SIZE < num_pages)
+	if ((addr_upper - addr_lower) / PAGE_SIZE < num_pages)
 		return NULL;
 
 	unsigned long start_entry = PAGE_ADDR_TO_BMAP_ENTRY(addr_lower);
@@ -184,31 +184,31 @@ void* bmap_alloc_range(size_t num_pages, uintptr_t addr_lower, uintptr_t addr_up
 	size_t contiguous_pages_found = 0;
 
 	/* Only search within the specified range */
-	for(size_t i = BMAP_ENTRY_TO_ARR_INDEX(start_entry); curr_entry + contiguous_pages_found < end_entry; i++)
+	for (size_t i = BMAP_ENTRY_TO_ARR_INDEX(start_entry); curr_entry + contiguous_pages_found < end_entry; i++)
 	{
 		/* Ignore array entries with no free pages */
-		if(!(~bmap[i]))
+		if (!(~bmap[i]))
 			continue;
 
 		bmap_array_elem_t arr_entry = bmap[i];
 		bmap_array_elem_t search_mask = 1;
 
-		for(size_t j = 0; j < PAGES_PER_ARRAY_ENTRY; j++)
+		for (size_t j = 0; j < PAGES_PER_ARRAY_ENTRY; j++)
 		{
 			/* If it's the first iteration, adjust the starting bit */
-			if(i == BMAP_ENTRY_TO_ARR_INDEX(start_entry) && j == 0) {
+			if (i == BMAP_ENTRY_TO_ARR_INDEX(start_entry) && j == 0) {
 				j = BMAP_ENTRY_TO_BIT_OFFSET(start_entry);
 				search_mask <<= j;
 			}
 
-			if(~arr_entry & search_mask)
+			if (~arr_entry & search_mask)
 				contiguous_pages_found++;
 			else {
 				contiguous_pages_found = 0;
 				curr_entry = i * PAGES_PER_ARRAY_ENTRY + j + 1;
 			}
 
-			if(contiguous_pages_found == num_pages) {
+			if (contiguous_pages_found == num_pages) {
 				uintptr_t page_addr = BMAP_ENTRY_TO_PAGE_ADDR(curr_entry);
 				set_pages_used(page_addr, num_pages);
 				return (void*) page_addr;
@@ -230,7 +230,7 @@ void* bmap_alloc_range(size_t num_pages, uintptr_t addr_lower, uintptr_t addr_up
 */
 void bmap_free(void* page_addr, size_t num_pages)
 {
-	if(page_addr == NULL)
+	if (page_addr == NULL)
 		return;
 
 	set_pages_free((uintptr_t) page_addr, num_pages);
@@ -248,7 +248,7 @@ void bmap_print(void)
 	printf("entry end: %u\n", PAGE_ADDR_TO_BMAP_ENTRY(mem_end));
 	printf("array size: %u\n", bmap_arr_length);
 
-	for(size_t i = 0; i < bmap_arr_length; i++)
+	for (size_t i = 0; i < bmap_arr_length; i++)
 		printf("0x%x ", bmap[i]);
 	printf("\n");
 }
@@ -268,7 +268,7 @@ static void set_pages_used(uintptr_t page_addr, size_t num_pages)
 	size_t array_entry = BMAP_ENTRY_TO_ARR_INDEX(bmap_entry);
 	size_t bit_offset = BMAP_ENTRY_TO_BIT_OFFSET(bmap_entry);
 
-	while(num_pages > 0)
+	while (num_pages > 0)
 	{
 		size_t bits_to_set = MIN(PAGES_PER_ARRAY_ENTRY - bit_offset, num_pages);
 
@@ -294,7 +294,7 @@ static void set_pages_free(uintptr_t page_addr, size_t num_pages)
 	size_t array_entry = bmap_entry / PAGES_PER_ARRAY_ENTRY;
 	size_t bit_offset = bmap_entry % PAGES_PER_ARRAY_ENTRY;
 
-	while(num_pages > 0)
+	while (num_pages > 0)
 	{
 		size_t bits_to_zero = MIN(PAGES_PER_ARRAY_ENTRY - bit_offset, num_pages);
 

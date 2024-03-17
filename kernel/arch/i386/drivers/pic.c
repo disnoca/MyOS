@@ -70,7 +70,7 @@ void pic_set_mask(uint16_t mask)
 void pic_send_eoi(uint8_t irq)
 {
 	// it's only necessary to send an eoi to the slave if the IRQ came from it
-	if(irq >= 8)
+	if (irq >= 8)
 		outb(SLAVE_COMMAND_PORT, EOI_CODE);
 	
 	outb(MASTER_COMMAND_PORT, EOI_CODE);

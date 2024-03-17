@@ -28,7 +28,7 @@ int kmain(multiboot_info_t* mbi, uint32_t magic)
 	vga_init();
 	serial_init();
 
-	if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
+	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		PANIC("Invalid magic number");
 	}
 

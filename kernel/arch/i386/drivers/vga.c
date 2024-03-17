@@ -143,21 +143,21 @@ static uint16_t fb_read_cell(unsigned int pos)
 static void fb_scroll_up()
 {
 	// move every line up starting from the second
-	for(unsigned int line = 1; line < FB_HEIGHT; line++)
-		for(unsigned int col = 0; col < FB_WIDTH; col++) {
+	for (unsigned int line = 1; line < FB_HEIGHT; line++)
+		for (unsigned int col = 0; col < FB_WIDTH; col++) {
 			unsigned int old_pos = line*FB_WIDTH + col;
 			uint16_t cell_data = fb_read_cell(old_pos);
 			fb_write_cell(old_pos - FB_WIDTH, ((cell_data >> 8) & 0xFF), ((cell_data >> 4) & 0xF), (cell_data & 0xF));
 		}
 
 	// clear the last line
-	for(unsigned int i = FB_WIDTH; i > 0; i--)
+	for (unsigned int i = FB_WIDTH; i > 0; i--)
 		fb_write_cell((FB_CELL_COUNT-i), 0, BLACK, WHITE);
 }
 
 void fb_clear(void)
 {
-	for(unsigned int i = 0; i < FB_CELL_COUNT; i++)
+	for (unsigned int i = 0; i < FB_CELL_COUNT; i++)
 		fb_write_cell(i, 0, BLACK, WHITE);
 
 	cursor_move(0);
@@ -166,7 +166,7 @@ void fb_clear(void)
 
 void fb_write(const char* data, size_t size)
 {
-	for(unsigned int i = 0; i < size; i++)
+	for (unsigned int i = 0; i < size; i++)
 		fb_writechar(data[i++]);
 
 	cursor_move(cursor_pos);
@@ -176,7 +176,7 @@ void fb_writestring(const char* data)
 {
 	unsigned int i = 0;
 	
-	while(data[i])
+	while (data[i])
 		fb_writechar(data[i++]);
 
 	cursor_move(cursor_pos);
@@ -193,7 +193,7 @@ void fb_writechar(char c)
 
 	case('\b'): 
 		/* clean and move to previous cell (if not it the first one) */
-		if(cursor_pos)
+		if (cursor_pos)
 			fb_write_cell(--cursor_pos, 0, BLACK, WHITE);
 		break;
 
@@ -204,7 +204,7 @@ void fb_writechar(char c)
 	}	
 
 	/* if the framebuffer is full, simulate a scroll up */
-	if(cursor_pos >= FB_CELL_COUNT) {
+	if (cursor_pos >= FB_CELL_COUNT) {
 		fb_scroll_up();
 		cursor_pos -= FB_WIDTH;
 	}

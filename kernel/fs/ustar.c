@@ -26,7 +26,7 @@ static bool is_valid_checksum(ustar_file_header_data_t* ufhd);
 
 ustar_archive_t* ustar_archive_init(uint64_t start_addr, uint64_t size)
 {
-	if(start_addr % USTAR_SECTOR_SIZE)
+	if (start_addr % USTAR_SECTOR_SIZE)
 		return NULL;
 
 	ustar_archive_t* ua = kmalloc(sizeof(ustar_archive_t));
@@ -41,7 +41,7 @@ ustar_archive_t* ustar_archive_init(uint64_t start_addr, uint64_t size)
 
 size_t ustar_archive_load(ustar_archive_t* ua)
 {
-	if(!ustar_file_header_cache)
+	if (!ustar_file_header_cache)
 		ustar_file_header_cache = kmem_cache_create("ustar_file_header_cache", sizeof(ustar_file_header_t), NULL, NULL);
 
 	uint64_t curr_addr = ua->start_addr;
@@ -69,7 +69,7 @@ size_t ustar_archive_load(ustar_archive_t* ua)
 		/* Update loop variables and size if necessary */
 		uint64_t file_size = USTAR_HEADER_GET_FILE_SIZE(curr_header);
 		curr_addr += USTAR_SECTOR_SIZE + ROUND_UP(file_size, USTAR_SECTOR_SIZE);
-		if(unknown_size)
+		if (unknown_size)
 			ua->size += USTAR_SECTOR_SIZE + ROUND_UP(file_size, USTAR_SECTOR_SIZE);
 	}
 
@@ -121,7 +121,7 @@ static bool is_valid_checksum(ustar_file_header_data_t* ufhd)
 	unsigned int uchecksum = 0;
 	unsigned int schecksum = 0;
 
-	for(int i = 0; i < 148; i++) {
+	for (int i = 0; i < 148; i++) {
 		uchecksum += data[i];
 		schecksum += (signed char) data[i];
 	}
@@ -129,7 +129,7 @@ static bool is_valid_checksum(ustar_file_header_data_t* ufhd)
 	uchecksum += ((unsigned char) ' ') * 8;
 	schecksum += ((signed char) ' ') * 8;
 
-	for(int i = 156; i < 500; i++) {
+	for (int i = 156; i < 500; i++) {
 		uchecksum += data[i];
 		schecksum += (signed char) data[i];
 	}
