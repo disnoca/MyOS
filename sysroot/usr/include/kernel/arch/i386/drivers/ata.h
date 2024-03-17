@@ -54,7 +54,7 @@ unsigned char ata_init(void);
  * 
  * @return true if the write was successful, false otherwise
 */
-bool ata_write(unsigned char dev_id, void* data, uint64_t offset, uint64_t size);
+bool ata_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size);
 
 /**
  * Reads from an ATA device.
