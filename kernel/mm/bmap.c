@@ -136,16 +136,42 @@ void bmap_exclude(uintptr_t start_addr, uintptr_t end_addr)
 }
 
 
+/**
+ * Allocates contiguous pages.
+ * 
+ * @param num_pages the number of pages to allocate
+ * 
+ * @return the memory address of the first page or NULL if there aren't enough
+ * free contiguous pages anywhere in memory
+ */
 void* bmap_alloc(size_t num_pages)
 {
 	return bmap_alloc_range(num_pages, mem_start, mem_end);
 }
 
+/**
+ * Allocates contiguous pages above a specified address.
+ * 
+ * @param num_pages the number of pages to allocate
+ * @param addr_lower the address at which to allocate pages above of
+ * 
+ * @return the memory address of the first page or NULL if there aren't enough
+ * free contiguous pages above the specified address.
+ */
 void* bmap_alloc_lower(size_t num_pages, uintptr_t addr_lower)
 {
 	return bmap_alloc_range(num_pages, addr_lower, mem_end);
 }
 
+/**
+ * Allocates contiguous pages below a specified address.
+ * 
+ * @param num_pages the number of pages to allocate
+ * @param addr_upper the address at which to allocate pages below of
+ * 
+ * @return the memory address of the first page or NULL if there aren't enough
+ * free contiguous pages below the specified address.
+ */
 void* bmap_alloc_upper(size_t num_pages, uintptr_t addr_upper)
 {
 	return bmap_alloc_range(num_pages, mem_start, addr_upper);
@@ -154,7 +180,7 @@ void* bmap_alloc_upper(size_t num_pages, uintptr_t addr_upper)
 /**
  * Allocates contiguous pages within a specified range.
  * 
- * @param num_pages the number of contiguous pages to allocate
+ * @param num_pages the number of pages to allocate
  * @param addr_lower the lower bound address of the range, inclusive
  * @param max_addr the upper bound address of the range, exclusive
  * 
@@ -249,7 +275,7 @@ void bmap_print(void)
 	printf("array size: %u\n", bmap_arr_length);
 
 	for (size_t i = 0; i < bmap_arr_length; i++)
-		printf("0x%x ", bmap[i]);
+		printf("0x%X ", bmap[i]);
 	printf("\n");
 }
 

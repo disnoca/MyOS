@@ -25,9 +25,9 @@ dd CHECKSUM
 ; Allocate the initial stack.
 section .bootstrap_stack write nobits
 align 16
-kernel_stack_bottom:
+kernel_end_of_stack:
 	resb 16384
-kernel_stack_top:
+kernel_stack_bottom:
 
 
 ; Preallocate page directories and tables.
@@ -55,7 +55,7 @@ KERNEL_SPACE_PAGE_FRAMES equ 262144	; 1GB
 
 _start:
 	; Save the multiboot magic number and info struct
-	mov esp, kernel_stack_top
+	mov esp, kernel_stack_bottom
 	sub esp, _kernel_offset
 	add ebx, _kernel_offset
 	mov [esp - 4], eax
@@ -172,7 +172,7 @@ _higher_half_start:
 	mov cr3, eax
 
 .start:
-	mov esp, kernel_stack_top
+	mov esp, kernel_stack_bottom
 	mov ebp, esp
 	sub esp, 8							; mind the saved multiboot magic number and info struct
 

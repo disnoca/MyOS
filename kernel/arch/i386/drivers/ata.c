@@ -12,6 +12,8 @@
 #include <kernel/arch/i386/drivers/ata.h>
 
 #include <kernel/system.h>
+#include <kernel/mm/mm.h>
+
 #include <kernel/arch/i386/io.h>
 
 #include <stdio.h>
@@ -187,19 +189,21 @@ bool ata_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t
 static bool ata_partial_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
 {
 	ata_device_t* dev = ata_devices + dev_id;
-	uint8_t tmp_buf[dev->logical_sector_size];
+	uint8_t* sector_buf = kmalloc(dev->logical_sector_size);
 
 	/* If offset (and size) is not a multiple of the device's logical sector size */
 	uint16_t offset_in_sector = offset % dev->logical_sector_size;
 	if (offset_in_sector)
 	{
 		/* Read the whole sector */
-		if (!ata_read(dev_id, tmp_buf, offset - offset_in_sector, dev->logical_sector_size))
-			return false;
+		if (!ata_read(dev_id, sector_buf, offset - offset_in_sector, dev->logical_sector_size))
+			goto ret_err;
 
 		/* Copy the relevant part into the buffer */
 		size_t partial_read_size = MIN(dev->logical_sector_size - offset_in_sector, size);
-		memcpy(buf, tmp_buf + offset_in_sector, partial_read_size);
+		memcpy(buf, sector_buf + offset_in_sector, partial_read_size);
+
+		kfree(sector_buf);
 
 		/* Read the rest of the data if there's any remaining */
 		return partial_read_size == size ||
@@ -212,17 +216,22 @@ static bool ata_partial_read(unsigned char dev_id, void* buf, uint64_t offset, u
 	{
 		uint64_t sector_start_offset = ROUND_DOWN(offset + size, dev->logical_sector_size);
 
-		if (!ata_read(dev_id, tmp_buf, sector_start_offset, dev->logical_sector_size))
-			return false;
+		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
+			goto ret_err;
 
-		memcpy(buf + size - partial_read_size, tmp_buf, partial_read_size);
+		memcpy(buf + size - partial_read_size, sector_buf, partial_read_size);
+
+		kfree(sector_buf);
 
 		return partial_read_size == size ||
 			   ata_read(dev_id, buf, offset, size - partial_read_size);
 	}
 
 	/* Shouldn't ever reach here */
-	return false;
+
+	ret_err:
+		kfree(sector_buf);
+		return false;
 }
 
 /**
@@ -231,7 +240,7 @@ static bool ata_partial_read(unsigned char dev_id, void* buf, uint64_t offset, u
 static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size)
 {
 	ata_device_t* dev = ata_devices + dev_id;
-	uint8_t tmp_buf[dev->logical_sector_size];
+	uint8_t* sector_buf = kmalloc(dev->logical_sector_size);
 
 	/* If offset (and size) is not a multiple of the device's logical sector size */
 	uint16_t offset_in_sector = offset % dev->logical_sector_size;
@@ -240,16 +249,18 @@ static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t o
 		uint64_t sector_start_offset = offset - offset_in_sector;
 
 		/* Read the whole sector */
-		if (!ata_read(dev_id, tmp_buf, sector_start_offset, dev->logical_sector_size))
-			return false;
+		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
+			goto ret_err;
 
 		/* Copy the given data into the buffer */
 		size_t partial_write_size = MIN(dev->logical_sector_size - offset_in_sector, size);
-		memcpy(tmp_buf + offset_in_sector, data, partial_write_size);
+		memcpy(sector_buf + offset_in_sector, data, partial_write_size);
 
 		/* Write the data back into the sector */
-		if (!ata_write(dev_id, tmp_buf, sector_start_offset, dev->logical_sector_size))
-			return false;
+		if (!ata_write(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
+			goto ret_err;
+
+		kfree(sector_buf);
 
 		/* Write the rest of the data if there's any remaining */
 		return partial_write_size == size ||
@@ -262,20 +273,25 @@ static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t o
 	{
 		uint64_t sector_start_offset = ROUND_DOWN(offset + size, dev->logical_sector_size);
 
-		if (!ata_read(dev_id, tmp_buf, sector_start_offset, dev->logical_sector_size))
-			return false;
+		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
+			goto ret_err;
 
-		memcpy(tmp_buf, data + size - partial_write_size, partial_write_size);
+		memcpy(sector_buf, data + size - partial_write_size, partial_write_size);
 
-		if (!ata_write(dev_id, tmp_buf, sector_start_offset, dev->logical_sector_size))
-			return false;
+		if (!ata_write(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
+			goto ret_err;
+
+		kfree(sector_buf);
 
 		return partial_write_size == size ||
 			   ata_write(dev_id, data, offset, size - partial_write_size);
 	}
 
 	/* Shouldn't ever reach here */
-	return false;
+
+	ret_err:
+		kfree(sector_buf);
+		return false;
 }
 
 

@@ -71,15 +71,22 @@ void mm_init(multiboot_info_t* mbi)
 
 void* alloc_pages(size_t num_pages, unsigned char flags)
 {
+	void* page_addr;
+
 	/* Try to allocate a page from high memory first if specified */
 	if (flags & PA_HIGHMEM)
 	{
-		void* page_addr = bmap_alloc_lower(num_pages, HIGH_MEM_START);
+		page_addr = bmap_alloc_lower(num_pages, HIGH_MEM_START);
 		if (page_addr != NULL)
 			return page_addr;
 	}
 
-	return bmap_alloc_upper(num_pages, HIGH_MEM_START);
+	/* Otherwise, allocate from the kernel address space */
+	page_addr = bmap_alloc_upper(num_pages, HIGH_MEM_START);
+	if (page_addr == NULL)
+		PANIC("out of memory");
+
+	return page_addr;
 }
 
 
