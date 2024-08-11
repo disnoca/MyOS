@@ -9,7 +9,7 @@
  * 
  *  @return true if all serial ports are working correctly or false if a serial port is faulty
 */
-bool serial_init();
+int serial_init();
 
 /**
  *  Writes size bytes from the given data to the serial port.

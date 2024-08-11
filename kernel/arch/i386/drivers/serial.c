@@ -100,7 +100,7 @@ static void serial_configure_baud_rate(uint16_t com, uint16_t divisor)
 /* The serial ports are only going to be used for debugging, therefore,
  * since it won't be handling any received data, interrupts will be disabled.
 */
-bool serial_init()
+int serial_init()
 {
 	uint16_t com = SERIAL_COM1_BASE;
 
@@ -113,11 +113,11 @@ bool serial_init()
  
 	// Check if serial is faulty (i.e: not same byte as sent)
 	if (inb(SERIAL_DATA_PORT(com)) != 0xAE)
-	   return false;
+	   return -1;
 
 	// If serial is not faulty, disable looback mode
 	outb(SERIAL_MODEM_COMMAND_PORT(com), 0x03);
-	return true;
+	return 0;
 }
 
 /**

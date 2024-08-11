@@ -64,25 +64,22 @@
 unsigned char selected_dev_id;
 
 
-static bool ata_partial_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size);
-static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size);
+static int ata_device_init(ata_device_t* dev, uint16_t port_base, bool master);
+static int ata_identify(ata_device_t* dev, uint16_t* buf);
 
-static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master);
-static bool ata_identify(ata_device_t* dev, uint16_t* buf);
-
-static bool ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count);
-static bool ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count);
-static bool ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count);
-static bool ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count);
+static int ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count);
+static int ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count);
+static int ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count);
+static int ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count);
 
 static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_count);
 static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_count);
-static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count);
-static bool ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count);
+static int ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count);
+static int ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count);
 
 static void ata_select(ata_device_t* dev);
 static void ata_io_wait(ata_device_t* dev);
-static bool ata_poll(ata_device_t* dev);
+static int ata_poll(ata_device_t* dev);
 
 
 /* Global Functions */
@@ -91,10 +88,10 @@ unsigned char ata_init(void)
 {
 	ASSERT(num_ata_devices == 0);
 
-	num_ata_devices += ata_device_init(ata_devices, PRIMARY_PORT_BASE, true);
-	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, PRIMARY_PORT_BASE, false);
-	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, true);
-	num_ata_devices += ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, false);
+	num_ata_devices += !ata_device_init(ata_devices, PRIMARY_PORT_BASE, true);
+	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, PRIMARY_PORT_BASE, false);
+	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, true);
+	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, false);
 
 	ata_select(ata_devices);
 	selected_dev_id = 0;
@@ -103,30 +100,17 @@ unsigned char ata_init(void)
 }
 
 
-bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
+int ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_count)
 {
 	ASSERT(dev_id < num_ata_devices);
 
-	if (size == 0)
-		return true;
+	if (lba == 0)
+		return 0;
 
-	if (offset + size > ATA_DISK_SIZE(dev_id))
-		return false;
-
+	if (lba + sector_count > ATA_NUM_SECTORS(dev_id))
+		return -1;
+		
 	ata_device_t* dev = ata_devices + dev_id;
-
-	/* Divide read operation if size exceeds the maximum possible for a single one */
-	if (size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
-		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
-		return ata_read(dev_id, buf, offset, op_max_size) &&
-			   ata_read(dev_id, buf + op_max_size, offset, size - op_max_size);
-	}
-
-	if (offset % dev->logical_sector_size || size % dev->logical_sector_size)
-		return ata_partial_read(dev_id, buf, offset, size);
-
-	uint64_t lba = offset / dev->logical_sector_size;
-	uint16_t sector_count = size / dev->logical_sector_size;
 
 	if (dev_id != selected_dev_id)
 		ata_select(dev);
@@ -136,37 +120,24 @@ bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
 	if (lba < dev->lba48_num_sectors)
 		return ata_read48(dev, buf, lba, sector_count);
 	
-	return false;
+	return -1;
 }
 
-bool ata_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size)
+int ata_write(unsigned char dev_id, const void* data, uint64_t lba, uint16_t sector_count)
 {
 	ASSERT(dev_id < num_ata_devices);
 
-	if (size == 0)
-		return true;
+	if (lba == 0)
+		return 0;
 
-	if (offset + size > ATA_DISK_SIZE(dev_id))
-		return false;
+	if (lba + sector_count > ATA_NUM_SECTORS(dev_id))
+		return -1;
 
 	ata_device_t* dev = ata_devices + dev_id;
 
 	/* Restrict writes in sector 0 */
-	uint64_t lba = offset / dev->logical_sector_size;
 	if (lba == 0)
-		return false;
-
-	/* Divide write operation if size exceeds the maximum possible for a single one */
-	if (size / dev->logical_sector_size > LBA48_MAX_SECTOR_COUNT) {
-		uint32_t op_max_size = LBA48_MAX_SECTOR_COUNT * dev->logical_sector_size;
-		return ata_write(dev_id, data, offset, op_max_size) &&
-			   ata_write(dev_id, data + op_max_size, offset, size - op_max_size);
-	}
-
-	if (offset % dev->logical_sector_size || size % dev->logical_sector_size)
-		return ata_partial_write(dev_id, data, offset, size);
-
-	uint16_t sector_count = size / dev->logical_sector_size;
+		return -1;
 
 	if (dev_id != selected_dev_id)
 		ata_select(dev);
@@ -176,123 +147,11 @@ bool ata_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t
 	if (lba < dev->lba48_num_sectors)
 		return ata_write48(dev, data, lba, sector_count);
 	
-	return false;
+	return -1;
 }
 
 
 /* Helper Functions */
-
-
-/**
- * Performes a read operation with offset or size not matching with a disk's logical sector size.
-*/
-static bool ata_partial_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size)
-{
-	ata_device_t* dev = ata_devices + dev_id;
-	uint8_t* sector_buf = kmalloc(dev->logical_sector_size);
-
-	/* If offset (and size) is not a multiple of the device's logical sector size */
-	uint16_t offset_in_sector = offset % dev->logical_sector_size;
-	if (offset_in_sector)
-	{
-		/* Read the whole sector */
-		if (!ata_read(dev_id, sector_buf, offset - offset_in_sector, dev->logical_sector_size))
-			goto ret_err;
-
-		/* Copy the relevant part into the buffer */
-		size_t partial_read_size = MIN(dev->logical_sector_size - offset_in_sector, size);
-		memcpy(buf, sector_buf + offset_in_sector, partial_read_size);
-
-		kfree(sector_buf);
-
-		/* Read the rest of the data if there's any remaining */
-		return partial_read_size == size ||
-			   ata_read(dev_id, buf + partial_read_size, offset + partial_read_size, size - partial_read_size);
-	}
-
-	/* If size (and size only) is not a multiple of the device's logical sector size */
-	size_t partial_read_size = size % dev->logical_sector_size;
-	if (partial_read_size)
-	{
-		uint64_t sector_start_offset = ROUND_DOWN(offset + size, dev->logical_sector_size);
-
-		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
-			goto ret_err;
-
-		memcpy(buf + size - partial_read_size, sector_buf, partial_read_size);
-
-		kfree(sector_buf);
-
-		return partial_read_size == size ||
-			   ata_read(dev_id, buf, offset, size - partial_read_size);
-	}
-
-	/* Shouldn't ever reach here */
-
-	ret_err:
-		kfree(sector_buf);
-		return false;
-}
-
-/**
- * Performes a read operation with offset or size not matching with a disk's logical sector size.
-*/
-static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size)
-{
-	ata_device_t* dev = ata_devices + dev_id;
-	uint8_t* sector_buf = kmalloc(dev->logical_sector_size);
-
-	/* If offset (and size) is not a multiple of the device's logical sector size */
-	uint16_t offset_in_sector = offset % dev->logical_sector_size;
-	if (offset_in_sector)
-	{
-		uint64_t sector_start_offset = offset - offset_in_sector;
-
-		/* Read the whole sector */
-		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
-			goto ret_err;
-
-		/* Copy the given data into the buffer */
-		size_t partial_write_size = MIN(dev->logical_sector_size - offset_in_sector, size);
-		memcpy(sector_buf + offset_in_sector, data, partial_write_size);
-
-		/* Write the data back into the sector */
-		if (!ata_write(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
-			goto ret_err;
-
-		kfree(sector_buf);
-
-		/* Write the rest of the data if there's any remaining */
-		return partial_write_size == size ||
-			   ata_write(dev_id, data + partial_write_size, offset + partial_write_size, size - partial_write_size);
-	}
-
-	/* If size (and size only) is not a multiple of the device's logical sector size */
-	size_t partial_write_size = size % dev->logical_sector_size;
-	if (partial_write_size)
-	{
-		uint64_t sector_start_offset = ROUND_DOWN(offset + size, dev->logical_sector_size);
-
-		if (!ata_read(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
-			goto ret_err;
-
-		memcpy(sector_buf, data + size - partial_write_size, partial_write_size);
-
-		if (!ata_write(dev_id, sector_buf, sector_start_offset, dev->logical_sector_size))
-			goto ret_err;
-
-		kfree(sector_buf);
-
-		return partial_write_size == size ||
-			   ata_write(dev_id, data, offset, size - partial_write_size);
-	}
-
-	/* Shouldn't ever reach here */
-
-	ret_err:
-		kfree(sector_buf);
-		return false;
-}
 
 
 /**
@@ -302,17 +161,17 @@ static bool ata_partial_write(unsigned char dev_id, const void* data, uint64_t o
  * @param port_base the base IO port that connects to the disk controller
  * @param master whether the disk is master or not (slave)
  * 
- * @return true if the dev is connected, false otherwise
+ * @return 0 if the dev is connected, -1 otherwise
 */
-static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
+static int ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
 {
 	dev->port_base = port_base;
 	dev->master = master;
 
 	uint16_t buf[IDENTIFY_NUM_WORDS];
 
-	if (!ata_identify(dev, buf))
-		return false;
+	if (ata_identify(dev, buf) < 0)
+		return -1;
 
 	/* Words 60 & 61 taken as a uint32_t contain the total number of 28 bit LBA addressable sectors on the drive */
 	dev->lba28_num_sectors = (buf[61] << 16) | buf[60];
@@ -355,7 +214,7 @@ static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
 		}
 	}
 
-	return true;
+	return 0;
 }
 
 /**
@@ -364,9 +223,9 @@ static bool ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
  * @param dev the device to run the command on
  * @param buf a buffer to store the data returned by the IDENTIFY command
  * 
- * @return true if the dev is connected, is ATA, and no errors ocurred; false otherwise
+ * @return 0 if the dev is connected, is ATA, and no errors ocurred; false otherwise
 */
-static bool ata_identify(ata_device_t* dev, uint16_t* buf)
+static int ata_identify(ata_device_t* dev, uint16_t* buf)
 {
 	ata_select(dev);
 
@@ -381,7 +240,7 @@ static bool ata_identify(ata_device_t* dev, uint16_t* buf)
 
 	/* Read the Status port. If the value read is 0, the drive does not exist */
 	if (!inb(dev->port_base + PORT_STATUS))
-		return false;
+		return -1;
 
 	uint8_t status;
 
@@ -394,15 +253,15 @@ static bool ata_identify(ata_device_t* dev, uint16_t* buf)
 			break;
 
 		if (status & STATUS_ERR)
-			return false;
+			return -1;
 	}
 
 	if (timer == 0)
-		return false;
+		return -1;
 
 	/* Check the LBAmid and LBAhi ports to see if they are non-zero. If so, the drive is not ATA */
 	if (inb(dev->port_base + PORT_LBA_MID) || inb(dev->port_base + PORT_LBA_HI))
-		return false;
+		return -1;
 
 	/* Poll the Status port until DRQ sets */
 	timer = 0xFFFFFF;
@@ -413,17 +272,17 @@ static bool ata_identify(ata_device_t* dev, uint16_t* buf)
 			break;
 
 		if (status & STATUS_ERR)
-			return false;
+			return -1;
 	}
 
 	if (timer == 0)
-		return false;
+		return -1;
 
 	/* Read the data from the IDENTIFY command */
 	for (int i = 0; i < IDENTIFY_NUM_WORDS; i++)
 		buf[i] = inw(dev->port_base + PORT_DATA);
 
-	return true;
+	return 0;
 }
 
 
@@ -437,9 +296,9 @@ static bool ata_identify(ata_device_t* dev, uint16_t* buf)
  * @param lba the LBA
  * @param sector_count the number of sectors to read
  * 
- * @return true if the read completed successfully, false otherwise
+ * @return 0 if the read completed successfully, -1 otherwise
 */
-static bool ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count)
+static int ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count)
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS);
@@ -456,9 +315,9 @@ static bool ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t s
  * @param lba the LBA
  * @param sector_count the number of sectors to write
  * 
- * @return true if the write completed successfully, false otherwise
+ * @return 0 if the write completed successfully, -1 otherwise
 */
-static bool ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count)
+static int ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count)
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS);
@@ -475,9 +334,9 @@ static bool ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, u
  * @param lba the LBA
  * @param sector_count the number of sectors to read
  * 
- * @return true if the read completed successfully, false otherwise
+ * @return 0 if the read completed successfully, -1 otherwise
 */
-static bool ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count)
+static int ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS_EXT);
@@ -494,9 +353,9 @@ static bool ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t 
  * @param lba the LBA
  * @param sector_count the number of sectors to write
  * 
- * @return true if the write completed successfully, false otherwise
+ * @return 0 if the write completed successfully, -1 otherwise
 */
-static bool ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count)
+static int ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS_EXT);
@@ -560,17 +419,17 @@ static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_c
  * @param buf the buffer to write to
  * @param sector_count the number of sectors to read
  * 
- * @return true if the data transfer was successful, false otherwise
+ * @return 0 if the data transfer was successful, -1 otherwise
 */
-static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count)
+static int ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count)
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
 	for (uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready */
-		if (!ata_poll(dev))
-			return false;
+		if (ata_poll(dev) < 0)
+			return -1;
 
 		/* Transfer 256 16-bit values, a word at a time, from the data port into your buffer */
 		for (uint32_t j = 0; j < words_per_sector; j++)
@@ -579,7 +438,7 @@ static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_
 		ata_io_wait(dev);
 	}
 
-	return true;
+	return 0;
 }
 
 /**
@@ -591,17 +450,17 @@ static bool ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_
  * @param data the address to read from
  * @param sector_count the number of sectors to write
  * 
- * @return true if the data transfer was successful, false otherwise
+ * @return 0 if the data transfer was successful, -1 otherwise
 */
-static bool ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count)
+static int ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count)
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
 	for (uint32_t i = 0; i < sector_count; i++)
 	{
 		/* Wait until device is ready*/
-		if (!ata_poll(dev))
-			return false;
+		if (ata_poll(dev) < 0)
+			return -1;
 
 		/* Transfer 256 16-bit values, a word at a time, from memory into the data port */
 		for (uint32_t j = 0; j < words_per_sector; j++)
@@ -612,7 +471,7 @@ static bool ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t
 		while (inb(dev->port_base + PORT_STATUS) & STATUS_BSY) {}
 	}
 
-	return true;
+	return 0;
 }
 
 
@@ -636,9 +495,9 @@ static void ata_select(ata_device_t* dev)
  * 
  * @param dev the device
  * 
- * @return true if the device is ready, false if an error ocurred
+ * @return 0 if the device is ready, -1 if an error ocurred
 */
-static bool ata_poll(ata_device_t* dev)
+static int ata_poll(ata_device_t* dev)
 {
 	/* Read the Regular Status port until the BSY bit clears, and the DRQ bit sets or until the ERR bit or DF bit sets.
 	   If neither error bit is set, the device is ready. */
@@ -650,10 +509,10 @@ static bool ata_poll(ata_device_t* dev)
 			break;
 
 		if (status & POLL_ERR_MASK)
-			return false;
+			return -1;
 	}
 
-	return timer > 0;
+	return timer > 0 ? 0 : -1;
 }
 
 static void ata_io_wait(ata_device_t* dev)

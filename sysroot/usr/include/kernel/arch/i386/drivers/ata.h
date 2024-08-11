@@ -33,7 +33,7 @@ ata_device_t ata_devices[4];
 unsigned char num_ata_devices;
 
 
-#define ATA_DISK_SIZE(dev_id)	({ ata_device_t dev = ata_devices[dev_id]; MAX(dev.lba28_num_sectors, dev.lba48_num_sectors) * dev.logical_sector_size; })
+#define ATA_NUM_SECTORS(dev_id)	({ ata_device_t dev = ata_devices[dev_id]; MAX(dev.lba28_num_sectors, dev.lba48_num_sectors); })
 
 
 /**
@@ -49,21 +49,21 @@ unsigned char ata_init(void);
  * 
  * @param dev_id the device ID
  * @param data a pointer to write the data from
- * @param offset the address at which to write
- * @param size the size of data to write
+ * @param lba the lba to start writing the data to
+ * @param sector_count the number of sectors to write
  * 
- * @return true if the write was successful, false otherwise
+ * @return 0 if the write was successful, -1 otherwise
 */
-bool ata_write(unsigned char dev_id, const void* data, uint64_t offset, uint64_t size);
+int ata_write(unsigned char dev_id, const void* data, uint64_t lba, uint16_t sector_count);
 
 /**
  * Reads from an ATA device.
  * 
  * @param dev_id the device ID
  * @param buf a pointer to where to store the data
- * @param offset the address at which to read
- * @param size the size of the data to read
+ * @param lba the lba to start reading the data from
+ * @param sector_count the number of sectors to read
  * 
- * @return true if the read was successful, false otherwise
+ * @return 0 if the read was successful, -1 otherwise
 */
-bool ata_read(unsigned char dev_id, void* buf, uint64_t offset, uint64_t size);
+int ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_count);
