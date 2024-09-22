@@ -5,5 +5,5 @@ cd ..
 make clean
 
 rm -rf isodir
-rm -rf myos.iso
-rm -rf disk.img
+rm -f myos.iso
+#rm -f disk.img

@@ -64,55 +64,56 @@
 unsigned char selected_dev_id;
 
 
-static int ata_device_init(ata_device_t* dev, uint16_t port_base, bool master);
-static int ata_identify(ata_device_t* dev, uint16_t* buf);
+static int ata_dev_init(ata_dev_t* dev, uint16_t port_base, bool master);
+static int ata_identify(const ata_dev_t* dev, uint16_t* buf);
 
-static int ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count);
-static int ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count);
-static int ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count);
-static int ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count);
+static int ata_read28(const ata_dev_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count);
+static int ata_write28(const ata_dev_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count);
+static int ata_read48(const ata_dev_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count);
+static int ata_write48(const ata_dev_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count);
 
-static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_count);
-static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_count);
-static int ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count);
-static int ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count);
+static void ata_pio28_prepare(const ata_dev_t* dev, uint32_t lba, uint8_t sector_count);
+static void ata_pio48_prepare(const ata_dev_t* dev, uint64_t lba, uint16_t sector_count);
+static int ata_read_transfer(const ata_dev_t* dev, uint16_t* buf, uint32_t sector_count);
+static int ata_write_transfer(const ata_dev_t* dev, const uint16_t* data, uint32_t sector_count);
 
-static void ata_select(ata_device_t* dev);
-static void ata_io_wait(ata_device_t* dev);
-static int ata_poll(ata_device_t* dev);
+static void ata_select(const ata_dev_t* dev);
+static void ata_io_wait(const ata_dev_t* dev);
+static int ata_poll(const ata_dev_t* dev);
 
 
 /* Global Functions */
 
-unsigned char ata_init(void)
+bool initialized;
+
+int ata_init(void)
 {
-	ASSERT(num_ata_devices == 0);
+	ASSERT(!initialized);
+	initialized = true;
 
-	num_ata_devices += !ata_device_init(ata_devices, PRIMARY_PORT_BASE, true);
-	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, PRIMARY_PORT_BASE, false);
-	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, true);
-	num_ata_devices += !ata_device_init(ata_devices + num_ata_devices, SECONDARY_PORT_BASE, false);
+	num_ata_devs = 0;
+	num_ata_devs += !ata_dev_init(ata_devs, PRIMARY_PORT_BASE, true);
+	num_ata_devs += !ata_dev_init(ata_devs + num_ata_devs, PRIMARY_PORT_BASE, false);
+	num_ata_devs += !ata_dev_init(ata_devs + num_ata_devs, SECONDARY_PORT_BASE, true);
+	num_ata_devs += !ata_dev_init(ata_devs + num_ata_devs, SECONDARY_PORT_BASE, false);
 
-	ata_select(ata_devices);
+	ata_select(ata_devs + 0);
 	selected_dev_id = 0;
 
-	return num_ata_devices;
+	return num_ata_devs;
 }
 
 
-int ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_count)
+int ata_read(const ata_dev_t* dev, void* buf, uint64_t lba, uint16_t sector_count)
 {
-	ASSERT(dev_id < num_ata_devices);
-
 	if (lba == 0)
-		return 0;
+		printf("Warning: Reading from sector 0\n");
+	//	return -1;
 
-	if (lba + sector_count > ATA_NUM_SECTORS(dev_id))
+	if (lba + sector_count > ATA_NUM_SECTORS(dev))
 		return -1;
 		
-	ata_device_t* dev = ata_devices + dev_id;
-
-	if (dev_id != selected_dev_id)
+	if (dev->id != selected_dev_id)
 		ata_select(dev);
 
 	if (lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
@@ -123,23 +124,17 @@ int ata_read(unsigned char dev_id, void* buf, uint64_t lba, uint16_t sector_coun
 	return -1;
 }
 
-int ata_write(unsigned char dev_id, const void* data, uint64_t lba, uint16_t sector_count)
+int ata_write(const ata_dev_t* dev, const void* data, uint64_t lba, uint16_t sector_count)
 {
-	ASSERT(dev_id < num_ata_devices);
-
-	if (lba == 0)
-		return 0;
-
-	if (lba + sector_count > ATA_NUM_SECTORS(dev_id))
-		return -1;
-
-	ata_device_t* dev = ata_devices + dev_id;
-
 	/* Restrict writes in sector 0 */
 	if (lba == 0)
+		printf("Warning: Writing to sector 0\n");
+	//	return -1;
+
+	if (lba + sector_count > ATA_NUM_SECTORS(dev))
 		return -1;
 
-	if (dev_id != selected_dev_id)
+	if (dev->id != selected_dev_id)
 		ata_select(dev);
 
 	if (lba < dev->lba28_num_sectors && !(sector_count & 0xFF00))
@@ -161,10 +156,11 @@ int ata_write(unsigned char dev_id, const void* data, uint64_t lba, uint16_t sec
  * @param port_base the base IO port that connects to the disk controller
  * @param master whether the disk is master or not (slave)
  * 
- * @return 0 if the dev is connected, -1 otherwise
+ * @return 0 if the device is connected, -1 otherwise
 */
-static int ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
+static int ata_dev_init(ata_dev_t* dev, uint16_t port_base, bool master)
 {
+	dev->id = num_ata_devs;
 	dev->port_base = port_base;
 	dev->master = master;
 
@@ -223,9 +219,9 @@ static int ata_device_init(ata_device_t* dev, uint16_t port_base, bool master)
  * @param dev the device to run the command on
  * @param buf a buffer to store the data returned by the IDENTIFY command
  * 
- * @return 0 if the dev is connected, is ATA, and no errors ocurred; false otherwise
+ * @return 0 if the device is connected, is ATA, and no errors ocurred; false otherwise
 */
-static int ata_identify(ata_device_t* dev, uint16_t* buf)
+static int ata_identify(const ata_dev_t* dev, uint16_t* buf)
 {
 	ata_select(dev);
 
@@ -291,14 +287,14 @@ static int ata_identify(ata_device_t* dev, uint16_t* buf)
  * 
  * Assumes that the device is already selected.
  * 
- * @param dev the device
+ * @param dev the dev
  * @param buf the buffer to read the data to
  * @param lba the LBA
  * @param sector_count the number of sectors to read
  * 
  * @return 0 if the read completed successfully, -1 otherwise
 */
-static int ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count)
+static int ata_read28(const ata_dev_t* dev, uint16_t* buf, uint32_t lba, uint8_t sector_count)
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS);
@@ -310,14 +306,14 @@ static int ata_read28(ata_device_t* dev, uint16_t* buf, uint32_t lba, uint8_t se
  * 
  * Assumes that the device is already selected.
  * 
- * @param dev the device
+ * @param dev the dev
  * @param data an array to write the data from
  * @param lba the LBA
  * @param sector_count the number of sectors to write
  * 
  * @return 0 if the write completed successfully, -1 otherwise
 */
-static int ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count)
+static int ata_write28(const ata_dev_t* dev, const uint16_t* data, uint32_t lba, uint8_t sector_count)
 {
 	ata_pio28_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS);
@@ -329,14 +325,14 @@ static int ata_write28(ata_device_t* dev, const uint16_t* data, uint32_t lba, ui
  * 
  * Assumes that the device is already selected.
  * 
- * @param dev the device
+ * @param dev the dev
  * @param buf the buffer to read the data to
  * @param lba the LBA
  * @param sector_count the number of sectors to read
  * 
  * @return 0 if the read completed successfully, -1 otherwise
 */
-static int ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count)
+static int ata_read48(const ata_dev_t* dev, uint16_t* buf, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_READ_SECTORS_EXT);
@@ -348,14 +344,14 @@ static int ata_read48(ata_device_t* dev, uint16_t* buf, uint64_t lba, uint16_t s
  * 
  * Assumes that the device is already selected.
  * 
- * @param dev the device
+ * @param dev the dev
  * @param data an array to write the data from
  * @param lba the LBA
  * @param sector_count the number of sectors to write
  * 
  * @return 0 if the write completed successfully, -1 otherwise
 */
-static int ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count)
+static int ata_write48(const ata_dev_t* dev, const uint16_t* data, uint64_t lba, uint16_t sector_count)
 {
 	ata_pio48_prepare(dev, lba, sector_count);
 	outb(dev->port_base + PORT_COMMAND, COMMAND_WRITE_SECTORS_EXT);
@@ -370,7 +366,7 @@ static int ata_write48(ata_device_t* dev, const uint16_t* data, uint64_t lba, ui
  * @param lba the operation's starting LBA
  * @param sector_count the operation's sector count
 */
-static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_count)
+static void ata_pio28_prepare(const ata_dev_t* dev, uint32_t lba, uint8_t sector_count)
 {
 	/* Assert that the lba is addressable with 28 bits */
 	ASSERT(!(lba & 0xF0000000));
@@ -394,7 +390,7 @@ static void ata_pio28_prepare(ata_device_t* dev, uint32_t lba, uint8_t sector_co
  * @param lba the operation's starting LBA
  * @param sector_count the operation's sector count
 */
-static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_count)
+static void ata_pio48_prepare(const ata_dev_t* dev, uint64_t lba, uint16_t sector_count)
 {
 	/* Assert that the lba is addressable with 48 bits */
 	ASSERT(!(lba & 0xFFFF000000000000));
@@ -421,7 +417,7 @@ static void ata_pio48_prepare(ata_device_t* dev, uint64_t lba, uint16_t sector_c
  * 
  * @return 0 if the data transfer was successful, -1 otherwise
 */
-static int ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_count)
+static int ata_read_transfer(const ata_dev_t* dev, uint16_t* buf, uint32_t sector_count)
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
@@ -452,7 +448,7 @@ static int ata_read_transfer(ata_device_t* dev, uint16_t* buf, uint32_t sector_c
  * 
  * @return 0 if the data transfer was successful, -1 otherwise
 */
-static int ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t sector_count)
+static int ata_write_transfer(const ata_dev_t* dev, const uint16_t* data, uint32_t sector_count)
 {
 	uint32_t words_per_sector = dev->logical_sector_size / sizeof(uint16_t);
 
@@ -481,11 +477,12 @@ static int ata_write_transfer(ata_device_t* dev, const uint16_t* data, uint32_t 
  * 
  * @param dev the device to be selected
 */
-static void ata_select(ata_device_t* dev)
+static void ata_select(const ata_dev_t* dev)
 {
 	/* Select a target drive by sending 0xA0 for the master drive, or 0xB0 for the slave, to the "drive select" IO port */
 	outb(dev->port_base + PORT_DEVICE_SELECT, dev->master ? 0xA0 : 0xB0);
 	ata_io_wait(dev);
+	selected_dev_id = dev->id;
 }
 
 /**
@@ -493,11 +490,11 @@ static void ata_select(ata_device_t* dev)
  * 
  * Assumes that the device is already selected.
  * 
- * @param dev the device
+ * @param dev the dev
  * 
  * @return 0 if the device is ready, -1 if an error ocurred
 */
-static int ata_poll(ata_device_t* dev)
+static int ata_poll(const ata_dev_t* dev)
 {
 	/* Read the Regular Status port until the BSY bit clears, and the DRQ bit sets or until the ERR bit or DF bit sets.
 	   If neither error bit is set, the device is ready. */
@@ -515,7 +512,7 @@ static int ata_poll(ata_device_t* dev)
 	return timer > 0 ? 0 : -1;
 }
 
-static void ata_io_wait(ata_device_t* dev)
+static void ata_io_wait(const ata_dev_t* dev)
 {
 	/* Wait 400 nanoseconds */
 	inb(dev->port_base + PORT_CONTROL);

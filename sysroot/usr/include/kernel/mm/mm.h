@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kernel/multiboot.h>
-#include <kernel/list.h>
+#include <kernel/ds/list.h>
 #include <kernel/mm/slab.h>
 
 /* Must be defined: PAGE_SIZE */
@@ -16,8 +16,8 @@ extern char _kernel_offset;
 
 #define KERNEL_OFFSET 		((uintptr_t) &_kernel_offset)
 
-#define P2V(p)				(p + KERNEL_OFFSET)
-#define V2P(v)				(v - KERNEL_OFFSET)
+#define P2V(p)				((p) + KERNEL_OFFSET)
+#define V2P(v)				((v) - KERNEL_OFFSET)
 
 
 typedef struct page_s
@@ -39,8 +39,8 @@ typedef struct page_s
 page_t* mem_map;
 size_t mem_map_length;
 
-#define phys_to_page(p)		((page_t*) (mem_map + ((uintptr_t) (p)) / PAGE_SIZE))
-#define virt_to_page(v)		((page_t*) (phys_to_page(V2P((uintptr_t) (v)))))
+#define phys_to_page(p)		((page_t*) (mem_map + ((uintptr_t)(p)) / PAGE_SIZE))
+#define virt_to_page(v)		((page_t*) (phys_to_page(V2P((uintptr_t)(v)))))
 
 
 /* Page allocation flags */

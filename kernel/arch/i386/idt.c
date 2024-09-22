@@ -84,7 +84,7 @@ struct igd {
 	uint8_t reserved;
 	uint8_t flags_and_type;
 	uint16_t offset_ub;
-} __attribute__((packed));
+};
 
 static struct igd idt[HARDWARE_INTERRUPT_ENTRIES + IRQ_ENTRIES];
 

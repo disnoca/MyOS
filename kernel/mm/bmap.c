@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <limits.h>
 
 
 typedef unsigned long bmap_array_elem_t;
@@ -28,20 +29,20 @@ static size_t bmap_arr_length;
 static uintptr_t mem_start, mem_end;
 
 
-#define PAGES_PER_ARRAY_ENTRY			(8 * sizeof(bmap_array_elem_t))
-#define BMAP_ARRAY_ELEM_MAX				0xFFFFFFFFUL
+#define PAGES_PER_ARR_ELEM	(8 * sizeof(bmap_array_elem_t))
+#define BMAP_ARRAY_ELEM_MAX	((bmap_array_elem_t)ULONG_MAX)
 
-#define MEM_START_PAGE					(mem_start / PAGE_SIZE)
+#define MEM_START_PAGE	(mem_start / PAGE_SIZE)
 
 /* The bitmap does not include the static kernel or itself, therefore a page with index x corresponds to entry x - excluded pages. */
 /* Here are some macros to help with conversion: */
-#define PFN_TO_BMAP_ENTRY(pi) 			(pi - MEM_START_PAGE)
-#define PAGE_ADDR_TO_BMAP_ENTRY(pa) 	((pa / PAGE_SIZE) - MEM_START_PAGE)
-#define BMAP_ENTRY_TO_PFN(be) 			(be + MEM_START_PAGE)
-#define BMAP_ENTRY_TO_PAGE_ADDR(be)		((be + MEM_START_PAGE) * PAGE_SIZE)
+#define PFN_TO_BMAP_ENTRY(pi) 			((pi) - MEM_START_PAGE)
+#define PAGE_ADDR_TO_BMAP_ENTRY(pa) 	(((pa) / PAGE_SIZE) - MEM_START_PAGE)
+#define BMAP_ENTRY_TO_PFN(be) 			((be) + MEM_START_PAGE)
+#define BMAP_ENTRY_TO_PAGE_ADDR(be)		(((be) + MEM_START_PAGE) * PAGE_SIZE)
 
-#define BMAP_ENTRY_TO_ARR_INDEX(be)		(be / PAGES_PER_ARRAY_ENTRY)
-#define BMAP_ENTRY_TO_BIT_OFFSET(be)	(be % PAGES_PER_ARRAY_ENTRY)
+#define BMAP_ENTRY_TO_ARR_IDX(be)		((be) / PAGES_PER_ARR_ELEM)
+#define BMAP_ENTRY_TO_BIT_OFFSET(be)	((be) % PAGES_PER_ARR_ELEM)
 
 
 uintptr_t bmap_init(uintptr_t static_kernel_end, uintptr_t mem_end);
@@ -73,16 +74,16 @@ static void set_pages_free(uintptr_t page_addr, size_t num_pages);
 */
 uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 {
-	mem_start = ROUND_UP(_mem_start, sizeof(bmap_array_elem_t));
-	mem_end = ROUND_DOWN(_mem_end, PAGE_SIZE);
+	mem_start = ALIGN_UP(_mem_start, sizeof(bmap_array_elem_t));
+	mem_end = ALIGN_DOWN(_mem_end, PAGE_SIZE);
 
 	bmap = (bmap_array_elem_t*) P2V(mem_start);
 
-	uintptr_t aligned_free_mem_start = ROUND_UP(mem_start, PAGE_SIZE);
+	uintptr_t aligned_free_mem_start = ALIGN_UP(mem_start, PAGE_SIZE);
 
 	size_t free_mem_size = mem_end - aligned_free_mem_start;
 	size_t num_free_pages = free_mem_size / PAGE_SIZE;
-	size_t bmap_size = ROUND_UP(num_free_pages, PAGES_PER_ARRAY_ENTRY) / 8;
+	size_t bmap_size = ALIGN_UP(num_free_pages, PAGES_PER_ARR_ELEM) / 8;
 
 	mem_start += bmap_size;
 
@@ -91,12 +92,12 @@ uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 	{
 		size_t additional_bmap_mem = mem_start - aligned_free_mem_start;
 
-		aligned_free_mem_start += ROUND_UP(additional_bmap_mem, PAGE_SIZE);
+		aligned_free_mem_start += ALIGN_UP(additional_bmap_mem, PAGE_SIZE);
 
 		/* Exclude additional memory the bitmap will occupy */
 		free_mem_size = mem_end - aligned_free_mem_start;
 		num_free_pages = free_mem_size / PAGE_SIZE;
-		bmap_size = ROUND_UP(num_free_pages, PAGES_PER_ARRAY_ENTRY) / 8;
+		bmap_size = ALIGN_UP(num_free_pages, PAGES_PER_ARR_ELEM) / 8;
 
 		// TODO: reclaim page that might become available due to the bitmap's size reduction
 	}
@@ -113,7 +114,7 @@ uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 		bmap[i] = 0;
 
 	/* Set leftover pages as used */
-	bmap[bmap_arr_length - 1] = ~(BMAP_ARRAY_ELEM_MAX >> (num_free_pages % PAGES_PER_ARRAY_ENTRY));
+	bmap[bmap_arr_length - 1] = ~(BMAP_ARRAY_ELEM_MAX >> (num_free_pages % PAGES_PER_ARR_ELEM));
 
 	return mem_start;
 }
@@ -129,8 +130,8 @@ uintptr_t bmap_init(uintptr_t _mem_start, uintptr_t _mem_end)
 */
 void bmap_exclude(uintptr_t start_addr, uintptr_t end_addr)
 {
-	start_addr = ROUND_DOWN(start_addr, PAGE_SIZE);
-	end_addr = ROUND_UP(end_addr, PAGE_SIZE);
+	start_addr = ALIGN_DOWN(start_addr, PAGE_SIZE);
+	end_addr = ALIGN_UP(end_addr, PAGE_SIZE);
 
 	set_pages_used(start_addr, (end_addr - start_addr) / PAGE_SIZE);
 }
@@ -210,28 +211,32 @@ void* bmap_alloc_range(size_t num_pages, uintptr_t addr_lower, uintptr_t addr_up
 	size_t contiguous_pages_found = 0;
 
 	/* Only search within the specified range */
-	for (size_t i = BMAP_ENTRY_TO_ARR_INDEX(start_entry); curr_entry + contiguous_pages_found < end_entry; i++)
+	for (size_t i = BMAP_ENTRY_TO_ARR_IDX(start_entry); curr_entry + contiguous_pages_found < end_entry; i++)
 	{
-		/* Ignore array entries with no free pages */
-		if (!(~bmap[i]))
-			continue;
+		bmap_array_elem_t arr_elem = bmap[i];
 
-		bmap_array_elem_t arr_entry = bmap[i];
+		/* Skip array elements with no free bitmap entries */
+		if (!((bmap_array_elem_t)~arr_elem)) {
+			contiguous_pages_found = 0;
+			curr_entry = (i + 1) * PAGES_PER_ARR_ELEM;
+			continue;
+		}
+
 		bmap_array_elem_t search_mask = 1;
 
-		for (size_t j = 0; j < PAGES_PER_ARRAY_ENTRY; j++)
+		for (size_t j = 0; j < PAGES_PER_ARR_ELEM; j++)
 		{
 			/* If it's the first iteration, adjust the starting bit */
-			if (i == BMAP_ENTRY_TO_ARR_INDEX(start_entry) && j == 0) {
+			if (i == BMAP_ENTRY_TO_ARR_IDX(start_entry) && j == 0) {
 				j = BMAP_ENTRY_TO_BIT_OFFSET(start_entry);
 				search_mask <<= j;
 			}
 
-			if (~arr_entry & search_mask)
+			if (~arr_elem & search_mask) {
 				contiguous_pages_found++;
-			else {
+			} else {
 				contiguous_pages_found = 0;
-				curr_entry = i * PAGES_PER_ARRAY_ENTRY + j + 1;
+				curr_entry = i * PAGES_PER_ARR_ELEM + j + 1;
 			}
 
 			if (contiguous_pages_found == num_pages) {
@@ -291,19 +296,19 @@ void bmap_print(void)
 static void set_pages_used(uintptr_t page_addr, size_t num_pages)
 {
 	size_t bmap_entry = PAGE_ADDR_TO_BMAP_ENTRY(page_addr);
-	size_t array_entry = BMAP_ENTRY_TO_ARR_INDEX(bmap_entry);
+	size_t arr_idx = BMAP_ENTRY_TO_ARR_IDX(bmap_entry);
 	size_t bit_offset = BMAP_ENTRY_TO_BIT_OFFSET(bmap_entry);
 
 	while (num_pages > 0)
 	{
-		size_t bits_to_set = MIN(PAGES_PER_ARRAY_ENTRY - bit_offset, num_pages);
+		size_t bits_to_set = MIN(PAGES_PER_ARR_ELEM - bit_offset, num_pages);
 
-		bmap_array_elem_t mask = bits_to_set == PAGES_PER_ARRAY_ENTRY ? BMAP_ARRAY_ELEM_MAX :
+		bmap_array_elem_t mask = bits_to_set == PAGES_PER_ARR_ELEM ? BMAP_ARRAY_ELEM_MAX :
 			~(BMAP_ARRAY_ELEM_MAX << bits_to_set) << bit_offset;
-		bmap[array_entry] |= mask;
+		bmap[arr_idx] |= mask;
 
 		num_pages -= bits_to_set;
-		array_entry++;
+		arr_idx++;
 		bit_offset = 0;
 	}
 }
@@ -317,19 +322,19 @@ static void set_pages_used(uintptr_t page_addr, size_t num_pages)
 static void set_pages_free(uintptr_t page_addr, size_t num_pages)
 {
 	size_t bmap_entry = PAGE_ADDR_TO_BMAP_ENTRY(page_addr);
-	size_t array_entry = bmap_entry / PAGES_PER_ARRAY_ENTRY;
-	size_t bit_offset = bmap_entry % PAGES_PER_ARRAY_ENTRY;
+	size_t arr_idx = BMAP_ENTRY_TO_ARR_IDX(bmap_entry);
+	size_t bit_offset = BMAP_ENTRY_TO_BIT_OFFSET(bmap_entry);
 
 	while (num_pages > 0)
 	{
-		size_t bits_to_zero = MIN(PAGES_PER_ARRAY_ENTRY - bit_offset, num_pages);
+		size_t bits_to_zero = MIN(PAGES_PER_ARR_ELEM - bit_offset, num_pages);
 
-		bmap_array_elem_t mask = bits_to_zero == PAGES_PER_ARRAY_ENTRY ? BMAP_ARRAY_ELEM_MAX :
+		bmap_array_elem_t mask = bits_to_zero == PAGES_PER_ARR_ELEM ? BMAP_ARRAY_ELEM_MAX :
 			~(BMAP_ARRAY_ELEM_MAX << bits_to_zero) << bit_offset;
-		bmap[array_entry] &= ~mask;
+		bmap[arr_idx] &= ~mask;
 
 		num_pages -= bits_to_zero;
-		array_entry++;
+		arr_idx++;
 		bit_offset = 0;
 	}
 }

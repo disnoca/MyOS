@@ -20,7 +20,7 @@ AS = nasm
 CC = ${HOST}-gcc
 CC += --sysroot=$(SYSROOT) -isystem=/usr/include
 
-CFLAGS = -std=gnu11 -masm=intel -O2 -g -ffreestanding -Wall -Wextra
+CFLAGS = -std=gnu11 -masm=intel -O2 -g -ffreestanding -Wall -Wextra -D__MYOS__
 CFLAGS += $(KERNEL_ARCH_CFLAGS)
 ASFLAGS = -f elf
 ASFLAGS += $(KERNEL_ARCH_ASFLAGS)
@@ -58,7 +58,8 @@ $(LIBS) \
 $(LIB_DIR)/crtend.o \
 $(LIB_DIR)/crtn.o \
 
-HEADERS = $(wildcard $(SYSROOT)/usr/include/kernel/*.h) $(wildcard $(SYSROOT)/usr/include/kernel/*/*.h) $(wildcard $(SYSROOT)/usr/include/kernel/arch/$(ARCH)/*.h)
+HEADERS = $(wildcard $(SYSROOT)/usr/include/*.h) $(wildcard $(SYSROOT)/usr/include/*/*.h) $(wildcard $(SYSROOT)/usr/include/*/*/*.h)
+HEADERS += $(wildcard $(SYSROOT)/usr/include/${KERNEL_ARCH_DIR}/*.h) $(wildcard $(SYSROOT)/usr/include/${KERNEL_ARCH_DIR}/*/*.h)
 
 .PHONY: all clean dirs
 .SUFFIXES: .o .libk.o .a .c .S
@@ -113,7 +114,7 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(OBJS:.o=.d)
 	rm -f $(LIBK_OBJS)
-	rm -f $(LIBK_OBJS:.o=.d) *.d */*.d */*/*.d
+	rm -f $(LIBK_OBJS:.o=.d)
 
 -include $(OBJS:.o=.d)
 -include $(LIBK_OBJS:.o=.d)

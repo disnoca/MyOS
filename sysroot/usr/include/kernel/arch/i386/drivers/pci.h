@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kernel/list.h>
+#include <kernel/ds/list.h>
 
 #include <stdint.h>
 

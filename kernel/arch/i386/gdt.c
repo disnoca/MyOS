@@ -86,7 +86,7 @@ struct tss {
 	uint32_t   iomap;
 	
 	uint32_t   ssp[2];
-} __attribute__((packed));
+};
 
 /* Global Descriptor Table 
  * Except for a null descriptor in the fist position, this format is not global for all GDTs.
@@ -99,7 +99,7 @@ struct gdt {
 	uint8_t user_mode_code_segment[8];
 	uint8_t user_mode_data_segment[8];
 	uint8_t task_state_segment[8];
-} __attribute__((packed));
+};
 
 static struct tss tss;
 static struct gdt gdt;

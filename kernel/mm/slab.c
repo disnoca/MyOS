@@ -4,7 +4,7 @@
  * @author Samuel Pires
 */
 
-#include <kernel/list.h>
+#include <kernel/ds/list.h>
 #include <kernel/system.h>
 #include <kernel/utils.h>
 #include <kernel/mm/slab.h>
@@ -287,7 +287,7 @@ static void init_cache(kmem_cache_t* cache, const char* name, size_t obj_size, v
 				cache->objs_per_slab *= 2;
 		}
 
-		cache->pages_per_slab = DIV_ROUND_UP(obj_size * cache->objs_per_slab, PAGE_SIZE);
+		cache->pages_per_slab = DIV_CEIL(obj_size * cache->objs_per_slab, PAGE_SIZE);
 	}
 	
 	else

@@ -4,7 +4,7 @@
  * @author Samuel Pires
 */
 
-#include <kernel/list.h>
+#include <kernel/ds/list.h>
 
 
 void list_add_last(list_t* head, list_t* new)

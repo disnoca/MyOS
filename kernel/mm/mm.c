@@ -102,7 +102,7 @@ void free_pages(void* page_addr, size_t num_pages)
 
 static uintptr_t mem_map_init(uintptr_t mem_start, uintptr_t mem_end)
 {
-	mem_start = ROUND_UP(mem_start, sizeof(page_t));
+	mem_start = ALIGN_UP(mem_start, sizeof(page_t));
 	mem_map = (page_t*) P2V(mem_start);
 	mem_map_length = MIN(mem_end / PAGE_SIZE, MEM_MAP_MAX_LENGTH);
 
