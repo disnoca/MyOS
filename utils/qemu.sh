@@ -11,4 +11,6 @@ qemu-system-$(utils/arch.sh) \
 -boot order=d \
 -cdrom myos.iso \
 -drive id=disk,file=disk.img,format=raw,if=none \
--device ide-hd,drive=disk,bus=ide.0
+-device ide-hd,drive=disk,bus=ide.0 \
+-serial file:utils/logs/serial.txt
+

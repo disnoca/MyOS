@@ -32,12 +32,12 @@ LIBS += $(KERNEL_ARCH_LIBS)
 LIBK_CFLAGS = $(CFLAGS) -D__is_libk
 
 # Add all the non architecture-specific kernel source files to the kernel object list
-KERNEL_OBJS = $(patsubst %.c,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.c kernel/*/*.c)))
-#KERNEL_OBJS += $(patsubst %.S,%.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.S)))
+KERNEL_OBJS = $(patsubst %.c,%_c.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.c kernel/*/*.c)))
+#KERNEL_OBJS += $(patsubst %.S,%_s.o,$(filter-out kernel/arch/%, $(wildcard kernel/*.S)))
 
 # Add the correct architecture-specific files to the kernel object list
-KERNEL_OBJS += $(patsubst %.c,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.c ${KERNEL_ARCH_DIR}/*/*.c))
-KERNEL_OBJS += $(patsubst %.S,%.o,$(wildcard ${KERNEL_ARCH_DIR}/*.S))
+KERNEL_OBJS += $(patsubst %.c,%_c.o,$(wildcard ${KERNEL_ARCH_DIR}/*.c ${KERNEL_ARCH_DIR}/*/*.c))
+KERNEL_OBJS += $(patsubst %.S,%_s.o,$(wildcard ${KERNEL_ARCH_DIR}/*.S))
 
 CRT_OBJS = $(LIB_DIR)/crti.o $(LIB_DIR)/crtbegin.o $(LIB_DIR)/crtend.o $(LIB_DIR)/crtn.o
 
@@ -74,10 +74,10 @@ $(KERNEL_TARGET): $(KERNEL_ARCH_DIR)/linker.ld $(OBJS)
 	$(CC) -T $(KERNEL_ARCH_DIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub-file --is-x86-multiboot $(KERNEL_TARGET)
 
-kernel/%.o: kernel/%.S
+kernel/%_s.o: kernel/%.S
 	$(AS) $(ASFLAGS) $< -o $@
 
-kernel/%.o: kernel/%.c $(HEADERS)
+kernel/%_c.o: kernel/%.c $(HEADERS)
 	$(CC) -MD -c $< -o $@ $(CFLAGS)
 
 $(LIB_DIR)/libc.a: $(LIBC_OBJS)

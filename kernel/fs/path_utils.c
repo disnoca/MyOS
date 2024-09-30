@@ -1,3 +1,9 @@
+/**
+ * Auxiliary functions for path string manipulation.
+ * 
+ * @author Samuel Pires
+ */
+
 #include <string.h>
 
 #include <kernel/fs/path_utils.h>

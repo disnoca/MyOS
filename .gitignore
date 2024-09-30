@@ -1,9 +1,14 @@
+# Build files
 *.a
 *.d
 *.kernel
 *.o
 *.iso
 *.img
-
-.vscode
 isodir
+
+# IDE files
+.vscode
+
+# Other
+utils/logs

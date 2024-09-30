@@ -1,3 +1,9 @@
+/**
+ * Generic bitmap entry allocation and freeing functions.
+ * 
+ * @author Samuel Pires
+ */
+
 #include <stdio.h>
 #include <limits.h>
 

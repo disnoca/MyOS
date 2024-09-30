@@ -1,3 +1,9 @@
+/**
+ * File system functions.
+ * 
+ * @author Samuel Pires
+ */
+
 #include <kernel/fs/fs.h>
 #include <kernel/fs/path_utils.h>
 #include <kernel/system.h>

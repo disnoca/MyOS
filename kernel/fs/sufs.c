@@ -1,3 +1,10 @@
+/**
+ * SUFS (Simple Unix File System) implementation.
+ * A simplified version of the Unix File System created by me.
+ * 
+ * @author Samuel Pires
+ */
+
 #include <stdio.h>
 #include <string.h>
 
