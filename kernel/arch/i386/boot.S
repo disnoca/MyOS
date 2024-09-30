@@ -25,6 +25,7 @@ dd CHECKSUM
 ; Allocate the initial stack.
 section .bootstrap_stack write nobits
 align 16
+global kernel_end_of_stack
 kernel_end_of_stack:
 	resb 16384
 kernel_stack_bottom:
@@ -175,7 +176,7 @@ _higher_half_start:
 	mov esp, kernel_stack_bottom
 	mov ebp, esp
 	sub esp, 8							; mind the saved multiboot magic number and info struct
-
+	
 	call _init							; call the global constructors.
 
 	call kmain
